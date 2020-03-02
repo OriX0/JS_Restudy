@@ -51,3 +51,15 @@ function f (a, b) {
   alert(a + b);
 }
 f.defer(1000)(1, 2); // 1 秒钟后显示 3
+
+
+// promises错误处理 
+// 你怎么看？.catch 会触发么？解释你的答案。
+new Promise(function (resolve, reject) {
+  setTimeout(() => {
+    throw new Error("Whoops!");
+  }, 1000);
+}).catch(alert);
+
+
+// 手动实现 将普通函数包装 并返回promise 考虑多参数的状况

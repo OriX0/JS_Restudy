@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+
+</body>
+<script>
+  window.addEventListener('unhandledrejection', function (event) {
+    // the event object has two special properties:
+    alert(event.promise); // [object Promise] - 产生错误的 promise
+    alert(event.reason); // Error: Whoops! - 未处理的错误对象
+  });
+
+  new Promise(function () {
+    throw new Error("Whoops!");
+  });
+</script>
+
+</html>
