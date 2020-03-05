@@ -6857,3 +6857,1264 @@ async function f() {
 
 # Generators 高级iteration
 
+## Generator
+
+### Generator函数
+
+一个特殊的语法结构：`function*`
+
+“generator 函数”这个术语听起来有点误导，因为我们在调用它时候并不会执行代码。相反，他返回一个特殊的对象，我们称为“generator 对象”。
+
+因此，它是一种“generator 构造器函数”。
+
+```javascript
+function* generateSequence() {
+  yield 1;
+  yield 2;
+  return 3;
+}
+```
+
+#### next()方法
+
+`next()` 的结果总是一个对象：
+
+- `value`：yielded 值。
+- `done`：如果代码没有执行完，其值为 `false`，否则就是 `true`。
+
+每次next 即代码执行到第一个yield处
+
+#### `function* f(…)` **或者** `function *f(…)`**均可**
+
+### 可迭代 
+
+可以通过 `for..of` 循环迭代所有值
+
+只能迭代 yield的值
+
+```javascript
+function* generateSequence() {
+  yield 1;
+  yield 2;
+  return 3;
+}
+
+let generator = generateSequence();
+
+for(let value of generator) {
+  alert(value); // 1, then 2
+}
+```
+
+#### 可以调用相关函数 例如：spread 操作 `...`
+
+### 使用generator进行迭代
+
+```javascript
+function* generateSequence(start, end) {
+  for (let i = start; i <= end; i++) {
+    yield i;
+  }
+}
+
+let sequence = [...generateSequence(1,5)];
+
+alert(sequence); // 1, 2, 3, 4, 5
+```
+
+### 转换Symbol.iterator 为generator
+
+```javascript
+ *[Symbol.iterator]() { // [Symbol.iterator]: function*() 的简写形式
+```
+
+```javascript
+let range = {
+  from: 1,
+  to: 5,
+
+  *[Symbol.iterator]() { // [Symbol.iterator]: function*() 的简写形式
+    for(let value = this.from; value <= this.to; value++) {
+      yield value;
+    }
+  }
+};
+
+alert( [...range] ); // 1,2,3,4,5
+```
+
+正常工作，因为 `range[Symbol.iterator]()` 现在返回一个 generator，而 generator 方法正是 `for..of` 所期待的：
+
+- 它具有 `.next()` 方法
+- 它以 `{value: ..., done: true/false}` 的形式返回值
+
+### Generator组合
+
+我们已经有了 `function* generateSequence(start, end)`。让我们重复使用它来一个个地传递 3 个序列，它真是我们所需要的。
+
+Generator 组合是将一个 generator 流插入到另一个 generator 的自然的方式。
+
+```javascript
+function* generateSequence(start, end) {
+  for (let i = start; i <= end; i++) yield i;
+}
+
+function* generatePasswordCodes() {
+
+  // 0..9
+  yield* generateSequence(48, 57);
+
+  // A..Z
+  yield* generateSequence(65, 90);
+
+  // a..z
+  yield* generateSequence(97, 122);
+
+}
+
+let str = '';
+
+for(let code of generatePasswordCodes()) {
+  str += String.fromCharCode(code);
+}
+
+alert(str); // 0..9A..Za..z
+```
+
+特殊 `yield*` 指令负责组合。它将执行**委托**给另一个 generator。或者简单来说就是 `yield* gen` 迭代 generator `gen` 并显式地将其 yield 结果转发到外部。
+
+### yield双向路径
+
+`yield` 是一个双向路径：它不仅向外面返回结果，而且可以传递 generator 内的值
+
+```javascript
+function* gen() {
+  let ask1 = yield "2 + 2?";
+
+  alert(ask1); // 4
+
+  let ask2 = yield "3 * 3?"
+
+  alert(ask2); // 9
+}
+
+let generator = gen();
+
+alert( generator.next().value ); // "2 + 2?"
+
+alert( generator.next(4).value ); // "3 * 3?"
+
+alert( generator.next(9).done ); // true
+```
+
+1. 第一个 `.next()` 开始执行……它到达第一个 `yield`。
+2. 结果返回到外部代码中。
+3. 第二个 `.next(4)` 将 `4` 作为第一个 `yield` 结果传递回 generator 并恢复执行过程。
+4. ……此时到达第二个 `yield`，它变成了 generator 调用的结果。
+5. 第三个 `next(9)` 将 `9` 作为第二个 `yield` 的结果传入 generator 并恢复执行过程，此时到达函数最底部，从而返回 `done: true`。
+
+### generator.throw
+
+要向 `yield` 传递错误，我们应该调用 `generator.throw(err)`。在那种情况下，`err` 与 `yield` 一起被抛出。
+
+```javascript
+function* gen() {
+  try {
+    let result = yield "2 + 2?"; // (1)
+
+    alert("The execution does not reach here, because the exception is thrown above");
+  } catch(e) {
+    alert(e); // 显示错误
+  }
+}
+
+let generator = gen();
+
+let question = generator.next().value;
+
+generator.throw(new Error("The answer is not found in my database")); // (2)
+```
+
+#### 外部捕获
+
+```javascript
+function* generate() {
+  let result = yield "2 + 2?"; // 这行出错
+}
+
+let generator = generate();
+
+let question = generator.next().value;
+
+try {
+  generator.throw(new Error("The answer is not found in my database"));
+} catch(e) {
+  alert(e); // 显示错误
+}
+```
+
+## 异步迭代器和生成器
+
+### 异步迭代器
+
+|                            | 迭代器            | 异步迭代器             |
+| :------------------------- | :---------------- | ---------------------- |
+| 提供 `iterator` 的对象方法 | `Symbol.iterator` | `Symbol.asyncIterator` |
+| `next()` 返回的值是        | 任意值            | `Promise`              |
+| 使用的循环语法是           | `for..of`         | `for await..of`        |
+
+使对象可以异步地迭代：
+
+1. 为了异步地迭代一个对象，这个对象必须有 `Symbol.asyncIterator` 方法 `(1)`。
+2. 这个方法必须返回一个带有 `next()` 方法的对象，该方法会返回一个 promise `(2)`。
+3. 这个 `next()` 方法可以不使用 `async` 关键字，它可以是一个常规的方法返回一个 `promise`，但是使用 `async` 关键字允许在方法内部使用 `await`，所以会更加方便。这里我们只是用来延迟 1 秒操作 `(3)`。
+4. 我们使用 `for await(let value of range)` 来执行迭代 `(4)`，也就是在 `for` 后面增加 `await`。它会调用一次 `range[Symbol.asyncIterator]()` 方法一次然后调用它的 `next()` 方法获取值。
+
+```javascript
+let range = {
+  from: 1,
+  to: 5,
+
+  // 使用 for await..of 语句的时候就会调用一次这个方法
+  [Symbol.asyncIterator]() { // (1)
+    // ……它返回一个迭代器对象：
+    // 进一步说, for await..of 只能作用于可迭代对象,
+    // 使用 next() 方法得到下一个值
+    return {
+      current: this.from,
+      last: this.to,
+
+      // next() 被 for await..of 循环在每一次迭代过程中调用
+      async next() { // (2)
+        // 它应该返回一个形如  {done:.., value :...} 的对象
+        // (会被 async 关键字自动包装成一个 promise)
+
+        // 可以在内部使用 await 关键字来执行异步任务:
+        await new Promise(resolve => setTimeout(resolve, 1000)); // (3)
+
+        if (this.current <= this.last) {
+          return { done: false, value: this.current++ };
+        } else {
+          return { done: true };
+        }
+      }
+    };
+  }
+};
+
+(async () => {
+
+  for await (let value of range) { // (4)
+    alert(value); // 1,2,3,4,5
+  }
+
+})()
+```
+
+#### 展开运算符...无法执行异步操作
+
+它要找到 `Symbol.iterator`，跟 `for..of` 没有 `await` 一样。并非是 `Symbol.asyncIterator`。
+
+```javascript
+alert( [...range] ); // Error, no Symbol.iterator
+```
+
+### 异步生成器
+
+|                     | 常规生成器                    | 异步生成器                                          |
+| :------------------ | :---------------------------- | :-------------------------------------------------- |
+| 声明方式            | `function*`                   | `async function*`                                   |
+| `next()` 返回的值是 | `{value:…, done: true/false}` | 被解析成 `{value:…, done: true/false}` 的 `Promise` |
+
+只需要在生成器函数前面加上 `async` 便可以使用await
+
+```javascript
+async function* generateSequence(start, end) {
+
+  for (let i = start; i <= end; i++) {
+
+    // 很好，可以使用 await!
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    yield i;
+  }
+
+}
+
+(async () => {
+
+  let generator = generateSequence(1, 5);
+  for await (let value of generator) {
+    alert(value); // 弹出 1, 然后 2, 然后 3, 然后 4, 然后 5
+  }
+
+})();
+```
+
+```javascript
+result = await generator.next(); // result = {value: ..., done: true/false}
+```
+
+### 异步可迭代对象
+
+将 `Symbol.iterator` 带换成异步的 `Symbol.asyncIterator`
+
+```javascript
+let range = {
+  from: 1,
+  to: 5,
+
+  async *[Symbol.asyncIterator]() { // 等价于 [Symbol.asyncIterator]: async function*()
+    for(let value = this.from; value <= this.to; value++) {
+
+      // 在获得 value 之间暂停，执行其他任务
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      yield value;
+    }
+  }
+};
+
+(async () => {
+
+  for await (let value of range) {
+    alert(value); // 弹出 1, 然后 2, 然后 3, 然后 4, 然后 5
+  }
+
+})();
+```
+
+# 模块
+
+## 简介
+
+### 什么是模块
+
+模块仅仅是一个文件，一个脚本而已，它就是这么简单。
+
+用一些关键字比如 `export` 和 `import` 来交换模块之间的功能（functionality）或者从一个模块中调用另一个模块中的函数。
+
+- `export` 关键字表示在当前模块之外可以访问的变量和功能。
+- `import` 关键字允许从其他模块中导入一些诸如函数之类的功能等等。
+
+### 核心功能
+
+#### 始终使用'user strict'
+
+比如 变量未定义
+
+```javascript
+<script type="module">
+  a = 5; // error
+</script>
+```
+
+#### 模块级作用域
+
+- 每个模块都有自己的顶级作用域（top-level scope）。换句话说，一个模块中的顶级作用域变量和函数在其他脚本中是不可见的。
+- 如果我们真的需要创建一个窗口级别（window-level）的全局变量，我们可以显式地将它分配给 `window` 并以 `window.user`来访问它。但是这样做需要你有足够充分的理由，否则就不要这样。
+- 每个 `<script type="module">` 也存在独立的顶级范围的作用域。
+
+```markup
+<script type="module">
+  // 变量仅可在模块脚本内部可见
+  let user = "John";
+</script>
+
+<script type="module">
+  alert(user); // Error: user is not defined
+</script>
+```
+
+#### 模块代码仅在第一次导入时解析
+
+如果将一个模块导入到多个其他位置，则仅在第一次导入时解析其代码，然后将**导出**提供给所有导入的位置。
+
+```javascript
+// 📁 alert.js
+alert("Module is evaluated!");
+// 从不同的文件导入相同模块
+
+// 📁 1.js
+import `./alert.js`; // Module is evaluated!
+
+// 📁 2.js
+import `./alert.js`; // (nothing)
+```
+
+如果需要修改某个值 
+
+这个模块被导入到多个文件中，模块仅仅在第一次导入的时候解析创建 `admin` 对象。然后将其传入所有导入的位置。
+
+```javascript
+// 📁 1.js
+import {admin} from './admin.js';
+admin.name = "Pete";
+
+// 📁 2.js
+import {admin} from './admin.js';
+alert(admin.name); // Pete
+```
+
+#### import.meta 
+
+`import.meta` 对象包含当前模块的一些信息。
+
+它的内容取决于其所在环境，比如说在浏览器环境中，它包含脚本的链接，如果是在 HTML 中的话就是当前页面的链接。
+
+```JavaScript
+<script type="module">
+  alert(import.meta.url); // 脚本链接 (在行内联本中就是当前页面的链接)
+</script>
+```
+
+#### 顶级this 是未定义
+
+在一个模块中，顶级 `this` 是未定义的，而不是像非模块脚本中的全局变量。
+
+```JavaScript
+<script>
+  alert(this); // window
+</script>
+
+<script type="module">
+  alert(this); // undefined
+</script>
+```
+
+### 特定于浏览器的功能
+
+#### 模块脚本是延迟解析的
+
+对于外部和内联模块脚本来说，它 **总是** 延迟解析的，就和 `defer` 属性一样
+
+也就是说：
+
+- 外部模块脚本 `<script type="module" src="...">` 不会阻塞 HTML 的解析，它们与其他资源并行加载。
+- 直到 HTML 文档完全解析渲染后（即使模块脚本比 HTML 先加载完成），模块脚本才会开始运行。
+- 执行脚本的相对顺序：在前面的先执行。
+
+```JavaScript
+<script type="module">
+  alert(typeof button); // object: 脚本可以‘看见’下面的 button
+  // 当脚本模块延迟时，脚本在整个页面加载完成之后才执行
+</script>
+
+相较于普通脚本：
+
+<script>
+  alert(typeof button); // Error: button is undefined，脚本不能“看到”下面的元素
+  // 普通脚本在剩余页面加载完成前就执行了
+</script>
+
+<button id="button">Button</button>
+```
+
+#### 脚本异步
+
+内联脚本和外部脚本都允许使用 `<script async type="module">` 属性，当导入的模块被处理时，异步脚本会立即运行，与其他的脚本或者 HTML 文档无关。
+
+这对于不依赖任何其他东西的功能来说是非常棒的，比如计数器，广告和文档级的事件监听器。
+
+```JavaScript
+             <!-- 所有依赖都获取(analytics.js)脚本，然后运行 -->
+<!-- 不会等待 HTML 文档或者其他 <script> 标签 -->
+<script async type="module">
+  import {counter} from './analytics.js';
+
+  counter.count();
+</script>
+```
+
+#### 外部脚本
+
+外部脚本相较于其他脚本有两个显著的差异：
+
+1. 具有相同 `src` 属性值的外部脚本仅运行一次：
+2. 从其他域名获取的外部脚本需要加上 [CORS](https://developer.mozilla.org/zh/docs/Web/HTTP/CORS) 头。换句话说，如果一个模块脚本是从其他域名获取的，那么它所在的远端服务器必须提供 `Access-Control-Allow-Origin: *`（可能使用加载的域名代替 `*`）响应头以指明当前请求是被允许的。
+
+#### 不允许裸模块
+
+在浏览器中，必须给与 `import` 一个相对或者绝对的 URL。没有给定路径的模块被称作“裸”模块。`import` 中不允许使用这些模块。
+
+些模块。
+
+例如，下面这个 `import` 是不允许的：
+
+```javascript
+import {sayHi} from 'sayHi'; // Error，“裸”模块
+// 模块必须提供路径，例如 './sayHi.js'
+```
+
+### 构建工具
+
+列出了一些构建工具做的事情
+
+1. 从一个打算放在 HTML 中的 `` 主模块开始。
+2. 分析它的依赖：它的导入以及它的导入的导入等。
+3. 用打包函数替换掉原生的 `import` 调用，生成一个（或者多个，这是可调的）具有所有模块的文件，这就是打包工具的工作。特殊的模块类型，比如 HTML/CSS 模块也是可以这样做的。
+4. 在这个过程中，可能会应用其他的转换或者优化：
+   - 删除无法访问的代码
+   - 删除未使用的导出（“tree-shaking”）
+   - 删除开发中使用的如 `console` 和 `debugger` 这样的语句
+   - 使用 [Babel](https://babeljs.io/) 可以将现代的，前沿的 JavaScript 语法转换为具有类似功能的旧语法
+   - 最终生成压缩文件（删除无用空格，变量用短的名字替换等）
+
+也就是说，原生模块也是可以使用的。所以我们在这里不会使用 Webpack，你可以稍后再配置它。
+
+## 导出和导入
+
+### 声明前导出
+
+导出操作 结尾不该有分号
+
+
+
+```javascript
+// 导出数组
+export let months = ['Jan', 'Feb', 'Mar','Apr', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// 导出 const 声明的变量
+export const MODULES_BECAME_STANDARD_YEAR = 2015;
+
+// 导出类
+export class User {
+  constructor(name) {
+    this.name = name;
+  }
+}
+```
+
+### 先声明最后导出
+
+```javascript
+// 📁 say.js
+function sayHi(user) {
+  alert(`Hello, ${user}!`);
+}
+
+function sayBye(user) {
+  alert(`Bye, ${user}!`);
+}
+
+export {sayHi, sayBye}; // 导出变量列表
+```
+
+### 导入所有 improt * 不推荐
+
+```javascript
+// 📁 main.js
+import * as say from './say.js';
+
+say.sayHi('John');
+say.sayBye('John');
+```
+
+“通通导入”看起来很酷，语法也很短，但是我们通常为什么要明确列出我们需要导入的内容？
+
+这里有几个原因：
+
+1. 现在的构建工具（[webpack](http://webpack.github.io/) 或者其他的）把模块打包到一起，然后对其进行优化以获得更快的加载速度，并且还会删除无用的代码。
+
+   …然后，打包工具会自动检测优化它，并且在打包文件中完全删除其他无用的函数以使得打包后的文件更小，这就是所谓的“tree-shaking”技术。
+
+2. 明确列出要导入的内容会使得名称较短：`sayHi()` 取代 `lib.sayHi()`。
+
+3. 显示导入可以更好的概述代码结构：在哪里使用了什么。它使得代码阅读和重构更容易。
+
+### 导入重命名
+
+以使用 `as` 让导入具有不同的名字。
+
+```javascript
+import {sayHi as hi, sayBye as bye} from './say.js';
+```
+
+### 导出重命名
+
+```javascript
+// 📁 say.js
+...
+export {sayHi as hi, sayBye as bye};
+```
+
+### 默认导出
+
+| 命名导出                  | 默认导出                          |
+| :------------------------ | :-------------------------------- |
+| `export class User {...}` | `export default class User {...}` |
+| `import {User} from ...`  | `import User from ...`            |
+
+- 默认导出要求下列的 `export` 和 `import` 语句：
+  1. `export default` 放在模块“主导出（main export）”之前。
+  2. `import` 导入时不使用花括号
+
+```javascript
+export default class User { // 只要添加“default”即可
+  constructor(name) {
+    this.name = name;
+  }
+}
+```
+
+#### Default 别名
+
+“default”关键词用于默认导出的别名，常用于我们需要引用单独导出和其他脚本的情况。
+
+```javascript
+function sayHi(user) {
+  alert(`Hello, ${user}!`);
+}
+
+export {sayHi as default};
+```
+
+导入默认导出和命名导出：
+
+```javascript
+                       // 📁 main.js
+import {default as User, sayHi} from './user.js';
+
+new User('John');
+```
+
+#### 默认导出应该谨慎使用
+
+命名导出是显式的。它们准确命名导入的内容，因此我们能得到更多的信息，这对于代码阅读与维护都是非常有利的。
+
+对于默认导出，我们总是在导入时选择名称：
+
+```javascript
+import User from './user.js'; // works
+import MyUser from './user.js'; // works too
+// 使用任何名称导入都没有问题
+```
+
+对于相同的导入，团队成员可能使用不同的命名，因此，默认导入的命名可能会被滥用，
+
+通常，为了避免这种情况并保持代码的整洁一致，可以遵从这条规则，即导入的变量应该与文件名相对应，例如：
+
+```javascript
+import User from './user.js';
+import LoginForm from './loginForm.js';
+import func from '/path/to/func.js';
+...
+```
+
+另一种解决方案是在任何地方都使用命名导出。即使只导出一个东西，也仍然使用命名导出，而不是默认导出 `default`。
+
+### Re-export 重新导出
+
+“Re-export”语法 `export ... from ...` 允许直接导出刚刚导入的内容（可能是其他名字），就像这样：
+
+```javascript
+export {sayHi} from './say.js';
+export {default as User} from './user.js';
+```
+
+#### 重新导出的默认导出很棘手
+
+请注意：`export User from './user.js'` 语句无效。这实际上是一个语法错误。要重新导出默认导出，我们必须明确指出 `{default as ...}`，就像上面例子一样。
+
+另外，还有另外一个奇怪之处是，`export * from './user.js'` 只重新导出命名导出，不导出默认导出。再次重申，我们需要像上面那样明确指出 `{default as ...}`。
+
+## 动态导入
+
+我们不能动态生成 `import` 的任何参数。
+
+模块路径必须是原始类型字符串，不能是函数调用，下面的语句不起作用：
+
+```javascript
+                               import ... from getModuleName(); // 错误，只能是原始类型字符串
+```
+
+其次，我们无法根据条件或者在运行时导入：
+
+```javascript
+if(...) {
+  import ...; // 错误，不允许这样做
+}
+
+{
+  import ...; // 错误，不能将导入放到块中
+}
+```
+
+这是因为，导入/导出的目的是为代码提供主干结构。这是非常好的事情，因为这样便于分析代码结构，可以收集和打包模块，可以删除未使用的导出（tree-shaken）。这些只有在这一切都是固定的情况才能够实现。
+
+### improt()函数
+
+`import(module)` 函数可以在任何地方调用。它返回一个解析为模块对象的 promise。
+
+使用模式如下：
+
+```javascript
+let modulePath = prompt("Module path?");
+
+import(modulePath)
+  .then(obj => <module object>)
+  .catch(err => <loading error, no such module?>)
+```
+
+另外，如果在一个 async 函数里，我们可以这样使用 `let module = await import(modulePath)`。
+
+# proxy和Reflect
+
+## proxy 
+
+语法：
+
+```javascript
+let proxy = new Proxy(target, handler)
+```
+
+- `target` —— 是要包装的对象，可以是任何东西，包括函数。
+- `handler` —— 代理配置：带有“陷阱”（“traps”，即拦截操作的方法）的对象。比如 `get` 陷阱用于读取 `target` 属性，`set` 陷阱写入 `target` 属性等等。
+
+| 内部方法                | Handler 方法               |                           何时触发                           |
+| :---------------------- | :------------------------- | :----------------------------------------------------------: |
+| `[[Get]]`               | `get`                      |                           读取属性                           |
+| `[[Set]]`               | `set`                      |                           写入属性                           |
+| `[[HasProperty]]`       | `has`                      |                         `in` 运算符                          |
+| `[[Delete]]`            | `deleteProperty`           |                        `delete` 操作                         |
+| `[[Call]]`              | `apply`                    |                   proxy 对象作为函数被调用                   |
+| `[[Construct]]`         | `construct`                |                          `new` 操作                          |
+| `[[GetPrototypeOf]]`    | `getPrototypeOf`           | [Object.getPrototypeOf](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getPrototypeOf) |
+| `[[SetPrototypeOf]]`    | `setPrototypeOf`           | [Object.setPrototypeOf](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/setPrototypeOf) |
+| `[[IsExtensible]]`      | `isExtensible`             | [Object.isExtensible](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/isExtensible) |
+| `[[PreventExtensions]]` | `preventExtensions`        | [Object.preventExtensions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/preventExtensions) |
+| `[[DefineOwnProperty]]` | `defineProperty`           | [Object.defineProperty](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty), [Object.defineProperties](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperties) |
+| `[[GetOwnProperty]]`    | `getOwnPropertyDescriptor` | [Object.getOwnPropertyDescriptor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyDescriptor), `for..in`, `Object.keys/values/entries` |
+| `[[OwnPropertyKeys]]`   | `ownKeys`                  | [Object.getOwnPropertyNames](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyNames), [Object.getOwnPropertySymbols](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertySymbols), `for..in`, `Object/keys/values/entries` |
+
+#### 内部强制执行不变式
+
+其中大多数用于返回值：
+
+- `[[Set]]` 如果值已成功写入，则必须返回 `true`，否则返回 `false`。
+- `[[Delete]]` 如果已成功删除该值，则必须返回 `true`，否则返回 `false`。
+- ……依此类推，我们将在下面的示例中看到更多内容。
+
+还有其他一些不变量，例如：
+
+- `[[GetPrototypeOf]]`, 应用于代理对象的，必须返回与 `[[GetPrototypeOf]]` 应用于被代理对象相同的值。换句话说，读取代理对象的原型必须始终返回被代理对象的原型。
+
+陷阱可以拦截这些操作，但是必须遵循这些规则。
+
+## 带Get陷阱的默认值
+
+最常见的陷阱是用于读取/写入属性。
+
+要拦截读取操作，`handler` 应该有 `get(target, property, receiver)` 方法。
+
+读取属性时触发该方法，参数如下：
+
+- `target` —— 是目标对象，该对象作为第一个参数传递给 `new Proxy`，
+- `property` —— 目标属性名,
+- `receiver` —— 如果目标属性是一个 getter 访问器属性，则 `receiver` 就是本次读取属性所在的 `this` 对象。通常，这就是 `proxy` 对象本身（或者，如果我们从代理继承，则是从该代理继承的对象）。现在我们不需要此参数，因此稍后将对其进行详细说明。
+
+```javascript
+let dictionary = {
+  'Hello': 'Hola',
+  'Bye': 'Adiós'
+};
+
+dictionary = new Proxy(dictionary, {
+  get(target, phrase) { // 拦截读取属性操作
+    if (phrase in target) { //如果字典包含该短语
+      return target[phrase]; // 返回译文
+    } else {
+      // 否则返回未翻译的短语
+      return phrase;
+    }
+  }
+});
+
+// 在字典中查找任意短语！
+// 最坏的情况也只是它们没有被翻译。
+alert( dictionary['Hello'] ); // Hola
+alert( dictionary['Welcome to Proxy']); // Welcome to Proxy
+```
+
+代理应该在所有地方都完全替代了目标对象。目标对象被代理后，任何人都不应该再引用目标对象。否则很容易搞砸。
+
+## 使用set陷阱进行验证
+
+当写入属性时 `set` 陷阱触发。
+
+`set(target, property, value, receiver)`:
+
+- `target` —— 是目标对象，该对象作为第一个参数传递给 `new Proxy`，
+- `property` —— 目标属性名称，
+- `value` —— 目标属性要设置的值，
+- `receiver` —— 与 `get` 陷阱类似，仅与 setter 访问器相关。
+
+```javascript
+let numbers = [];
+
+numbers = new Proxy(numbers, { // (*)
+  set(target, prop, val) { // 拦截写入操作
+    if (typeof val == 'number') {
+      target[prop] = val;
+      return true;
+    } else {
+      return false;
+    }
+  }
+});
+
+numbers.push(1); // 添加成功
+numbers.push(2); // 添加成功
+alert("Length is: " + numbers.length); // 2
+
+numbers.push("test"); // TypeError （proxy 的 `set` 操作返回 false）
+
+alert("This line is never reached (error in the line above)");
+```
+
+**别忘了返回 `true`**
+
+如上所述，要保持不变式。
+
+对于 `set`操作, 它必须在成功写入时返回 `true`。
+
+如果我们忘记这样做或返回任何 falsy值，则该操作将触发 `TypeError`。
+
+### 迭代 ownKeys 和getOwnpropertyDescriptor
+
+- `Object.getOwnPropertyNames(obj)` 返回非 Symbol 键。
+- `Object.getOwnPropertySymbols(obj)` 返回 symbol 键。
+- `Object.keys/values()` 返回带有 `enumerable` 标记的非 Symbol 键值对（属性标记在章节 [属性标志和属性描述符](https://zh.javascript.info/property-descriptors) 有详细描述).
+- `for..in` 循环遍历所有带有 `enumerable` 标记的非 Symbol 键，以及原型对象的键。
+
+```javascript
+let user = {
+  name: "John",
+  age: 30,
+  _password: "***"
+};
+
+user = new Proxy(user, {
+  ownKeys(target) {
+    return Object.keys(target).filter(key => !key.startsWith('_'));
+  }
+});
+
+// "ownKeys" 过滤掉 _password
+for(let key in user) alert(key); // name，然后是 age
+
+// 对这些方法同样有效：
+alert( Object.keys(user) ); // name,age
+alert( Object.values(user) ); // John,30
+```
+
+## deleteProperty 和其他陷阱的受保护属性
+
+使用代理来防止对以 `_` 开头的属性的任何访问。
+
+我们需要以下陷阱：
+
+- `get` 读取此类属性时抛出错误，
+- `set` 写入属性时抛出错误，
+- `deleteProperty` 删除属性时抛出错误，
+- `ownKeys` 在使用 `for..in` 和类似 `Object.keys` 的方法时排除以 `_` 开头的属性。
+
+```javascript
+let user = {
+  name: "John",
+  _password: "***"
+};
+
+user = new Proxy(user, {
+  get(target, prop) {
+    if (prop.startsWith('_')) {
+      throw new Error("Access denied");
+    }
+    let value = target[prop];
+    return (typeof value === 'function') ? value.bind(target) : value; // (*)
+  },
+  set(target, prop, val) { // 拦截写入操作
+    if (prop.startsWith('_')) {
+      throw new Error("Access denied");
+    } else {
+      target[prop] = val;
+      return true;
+    }
+  },
+  deleteProperty(target, prop) { // 拦截属性删除
+    if (prop.startsWith('_')) {
+      throw new Error("Access denied");
+    } else {
+      delete target[prop];
+      return true;
+    }
+  },
+  ownKeys(target) { // 拦截读取属性列表
+    return Object.keys(target).filter(key => !key.startsWith('_'));
+  }
+});
+
+// “get” 不允许读取 _password
+try {
+  alert(user._password); // Error: Access denied
+} catch(e) { alert(e.message); }
+
+//  “set” 不允许写入 _password
+try {
+  user._password = "test"; // Error: Access denied
+} catch(e) { alert(e.message); }
+
+// “deleteProperty” 不允许删除 _password 属性
+try {
+  delete user._password; // Error: Access denied
+} catch(e) { alert(e.message); }
+
+// “ownKeys” 过滤排除 _password
+for(let key in user) alert(key); // name
+```
+
+## in range 及has陷阱
+
+该 `has` 陷阱拦截 `in` 调用。
+
+```
+has(target, property)
+```
+
+- `target` —— 是目标对象，作为第一个参数传递给 `new Proxy`
+- `property` —— 属性名称
+
+```javascript
+let range = {
+  start: 1,
+  end: 10
+};
+
+range = new Proxy(range, {
+  has(target, prop) {
+    return prop >= target.start && prop <= target.end
+  }
+});
+
+alert(5 in range); // true
+alert(50 in range); // false
+```
+
+## 包装函数和proxy的区别
+
+```javascript
+function delay(f, ms) {
+  return function() {
+    setTimeout(() => f.apply(this, arguments), ms);
+  };
+}
+
+function sayHi(user) {
+  alert(`Hello, ${user}!`);
+}
+
+alert(sayHi.length); // 1 （函数的 length 是其声明中的参数个数）
+
+sayHi = delay(sayHi, 3000);
+
+alert(sayHi.length); // 0 （在包装器声明中，参数个数为0)
+```
+
+`Proxy` 功能强大得多，因为它将所有东西转发到目标对象。
+
+## Reflect
+
+| 操作                | `Reflect` 调用                      | 内部方法        |
+| :------------------ | :---------------------------------- | :-------------- |
+| `obj[prop]`         | `Reflect.get(obj, prop)`            | `[[Get]]`       |
+| `obj[prop] = value` | `Reflect.set(obj, prop, value)`     | `[[Set]]`       |
+| `delete obj[prop]`  | `Reflect.deleteProperty(obj, prop)` | `[[Delete]]`    |
+| `new F(value)`      | `Reflect.construct(F, value)`       | `[[Construct]]` |
+| …                   | …                                   | …               |
+
+**对于每个可被 `Proxy` 捕获的内部方法，`Reflect` 都有一个对应的方法 Reflect，其名称和参数与 `Proxy` 陷阱相同。**
+
+我们可以用 `Reflect` 来将操作转发到原始对象
+
+如果陷阱想要将调用转发给对象，则只需使用相同的参数调用 `Reflect.` 就足够了
+
+#### 代理一个getter
+
+```javascript
+let user = {
+  _name: "Guest",
+  get name() {
+    return this._name;
+  }
+};
+
+let userProxy = new Proxy(user, {
+  get(target, prop, receiver) {
+    return target[prop]; // (*) target = user
+  }
+});
+
+let admin = {
+  __proto__: userProxy,
+  _name: "Admin"
+};
+
+// Expected: Admin
+alert(admin.name); // 输出：Guest （？！？）
+```
+
+`get` 陷阱的第三个参数 `receiver`。它保证传递正确的 `this` 给 getter。在我们的情况下是 `admin`。
+
+如何为 getter 传递上下文？对于常规函数，我们可以使用 `call/apply`，但这是一个 getter，它不是“被调用”的，只是被访问的。
+
+`Reflect.get` 可以做到的。如果我们使用它，一切都会正常运行。
+
+我们可以将陷阱重写得更短：
+
+```javascript
+                                 get(target, prop, receiver) {
+  return Reflect.get(...arguments);
+}
+```
+
+`Reflect` 调用的命名方式与陷阱完全相同，并且接受相同的参数。它们是通过这种方式专门设计的。
+
+## proxy的局限
+
+### 内部插槽 除Array外
+
+许多内置对象，例如 `Map`, `Set`, `Date`, `Promise` 等等都使用了所谓的 “内部插槽”。
+
+它们类似于属性，但仅限于内部使用，仅用于规范目的。例如， `Map` 将项目存储在 `[[MapData]]`中。内置方法直接访问它们，而不通过 `[[Get]]/[[Set]]` 内部方法。所以 `Proxy` 不能拦截。
+
+例如：
+
+```javascript
+let map = new Map();
+
+let proxy = new Proxy(map, {});
+
+proxy.set('test', 1); // Error
+```
+
+在内部，一个 `Map` 将所有数据存储在其 `[[MapData]]` 内部插槽中。代理对象没有这样的插槽。[内建方法 `Map.prototype.set`](https://tc39.es/ecma262/#sec-map.prototype.set) 方法试图访问内部属性 `this.[[MapData]]`，但由于 `this=proxy` 在 `proxy` 中不能找到它，只能失败。
+
+```javascript
+let map = new Map();
+
+let proxy = new Proxy(map, {
+  get(target, prop, receiver) {
+    let value = Reflect.get(...arguments);
+    return typeof value == 'function' ? value.bind(target) : value;
+  }
+});
+
+proxy.set('test', 1);
+alert(proxy.get('test')); // 1 (works!)
+```
+
+### 私有字段
+
+类的私有字段也会发生类似的情况。
+
+例如，`getName()` 方法访问私有的 `#name` 属性并在代理后中断：
+
+```javascript
+class User {
+  #name = "Guest";
+
+  getName() {
+    return this.#name;
+  }
+}
+
+let user = new User();
+
+user = new Proxy(user, {});
+
+alert(user.getName()); // Error
+```
+
+原因是专用字段是使用内部插槽实现的。JavaScript 访问它们时不使用 `[[Get]]/[[Set]]`。
+
+再次，bind 方法的解决方案使它恢复正常：
+
+```javascript
+class User {
+  #name = "Guest";
+
+  getName() {
+    return this.#name;
+  }
+}
+
+let user = new User();
+
+user = new Proxy(user, {
+  get(target, prop, receiver) {
+    let value = Reflect.get(...arguments);
+    return typeof value == 'function' ? value.bind(target) : value;
+  }
+});
+
+alert(user.getName()); // Guest
+```
+
+### proxy != target 
+
+如果我们使用原始对象作为键，然后对其进行代理，则找不到代理：
+
+```javascript
+let allUsers = new Set();
+
+class User {
+  constructor(name) {
+    this.name = name;
+    allUsers.add(this);
+  }
+}
+
+let user = new User("John");
+
+alert(allUsers.has(user)); // true
+
+user = new Proxy(user, {});
+
+alert(allUsers.has(user)); // false
+```
+
+### proxy无法拦截严格相等 ===
+
+Proxy 可以拦截许多运算符，例如new（使用 `construct`），in（使用 `has`），delete（使用 `deleteProperty`）等。
+
+但是没有办法拦截对象的严格相等性测试。一个对象严格只等于自身，没有其他值。
+
+## 可取消的Proxy 
+
+语法为：
+
+```javascript
+let {proxy, revoke} = Proxy.revocable(target, handler)
+```
+
+例子：
+
+```javascript
+let object = {
+  data: "Valuable data"
+};
+
+let {proxy, revoke} = Proxy.revocable(object, {});
+
+// proxy 正常工作
+alert(proxy.data); // Valuable data
+
+// 之后某处调用
+revoke();
+
+// proxy 不再工作（已吊销）
+alert(proxy.data); // Error
+```
+
+调用 `revoke()` 会从代理中删除对目标对象的所有内部引用，因此不再连接它们。之后可以对目标对象进行垃圾回收。
+
+### 储存于 WeakMap
+
+```javascript
+let revokes = new WeakMap();
+
+let object = {
+  data: "Valuable data"
+};
+
+let {proxy, revoke} = Proxy.revocable(object, {});
+
+revokes.set(proxy, revoke);
+
+// ..later in our code..
+revoke = revokes.get(proxy);
+revoke();
+
+alert(proxy.data); // Error（已吊销）
+```
+
+这种方法的好处是我们不必随身携带revoke。我们可以在需要时从 map `proxy` 上获取它。
+
+# 杂项
+
+## Eval
+
+语法如下：
+
+```javascript
+let result = eval(code);
+```
+
+`eval` 返回字符串中最后一个语句的结果。
+
+```javascript
+let value = eval('let i = 0; ++i');
+alert(value); // 1
+```
+
+字符串内的代码在当前词法环境（lexical environment）下执行，因此能访问外部变量：
+
+```javascript
+let a = 1;
+
+function f() {
+  let a = 2;
+
+  eval('alert(a)'); // 2
+}
+
+f();
+```
+
+我们也能对外部变量重新赋值：
+
+```javascript
+let x = 5;
+eval("x = 10");
+alert(x); // 10, 变量的值改变了
+```
+
+严格模式（strict mode）下，`eval` 有属于自己的词法环境，因此我们不能从外部访问在 `eval` 中声明的函数和变量：
+
+```javascript
+// 提示: 网站内可运行的代码默认启用 'use strict'
+
+eval("let x = 5; function f() {}");
+
+alert(typeof x); // undefined (不存在该变量)
+// f 函数也不可从外部访问
+```
+
+如果不用严格模式，`eval` 没有属于自己的词法环境，因此我们能在外部访问 `x` 变量和 `f` 函数。
+
+### 使用eval
+
+现代编程中，`eval` 已不常用。人们经常说“eval is evil”.
+
+如今几乎找不到理由来用 `eval` 了。如果有人用，那么可能要换用现代语言构造（language construct）或者 [JavaScript Module](https://zh.javascript.info/modules) 了。
+
+**如果字符串中的代码不访问外部变量，调用 `window.eval(...)`：**
+
+这样，代码便会在全局作用域（global scope）内执行：
+
+```javascript
+let x = 1;
+{
+  let x = 5;
+  window.eval('alert(x)'); // 1 (全局变量)
+}
+```
+
+**如果 `eval` 内代码需要访问局部变量，我们可以使用 `new Function`，将此变量作为参数传递。**
+
+```javascript
+let f = new Function('a', 'alert(a)');
+
+f(5); // 5
+```
+
