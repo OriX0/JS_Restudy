@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <ul>
+    <li>Animals
+      <ul>
+        <li>Mammals
+          <ul>
+            <li>Cows</li>
+            <li>Donkeys</li>
+            <li>Dogs</li>
+            <li>Tigers</li>
+          </ul>
+        </li>
+        <li>Other
+          <ul>
+            <li>Snakes</li>
+            <li>Birds</li>
+            <li>Lizards</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>Fishes
+      <ul>
+        <li>Aquarium
+          <ul>
+            <li>Guppy</li>
+            <li>Angelfish</li>
+          </ul>
+        </li>
+        <li>Sea
+          <ul>
+            <li>Sea trout</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</body>
+<!-- 为显示每个 <li> 而编写代码：
+文本内容是什么（没有子树）。
+嵌套 <li> 的数量 —— 所有的后代，包括嵌套的后代。 -->
+<script>
+  for (let liHeads of document.querySelectorAll('li')) {
+    let title = liHeads.firstChild.data;
+    title = title.trim();
+    let count = liHeads.getElementsByTagName('li').length;
+    alert(title + ':' + count)
+  }
+</script>
+
+</html>

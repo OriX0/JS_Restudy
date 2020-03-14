@@ -63,3 +63,16 @@ new Promise(function (resolve, reject) {
 
 
 // 手动实现 将普通函数包装 并返回promise 考虑多参数的状况
+
+
+/*2
+创建一个函数 clear(elem) 用来移除元素里的内容。
+ <ol id="elem">
+  <li>Hello</li>
+  <li>World</li>
+</ol>
+<script>
+  function clear(elem)
+  clear(elem); // 清除列表
+</script>
+*/
