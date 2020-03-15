@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<style>
+  .clock {
+    padding: 5px;
+    width: 150px;
+    height: 60px;
+    margin: 0 auto;
+    border: 1px solid #ccc;
+    background-color: rgba(97, 192, 191, .7);
+  }
+
+  .hour {
+    color: #f8f3d4;
+  }
+
+  .min {
+    color: #f6416c;
+  }
+
+  .s {
+    color: #ffde7d;
+  }
+
+  p {
+    display: inline;
+    font-size: 16px;
+  }
+</style>
+
+<body>
+  <div class="clock">
+    <p></p>：
+    <p></p>：
+    <p></p>
+    <hr>
+    <input type="button" onclick="clockStart()" value="Start">
+    <input type="button" onclick="clockStop()" value="Stop">
+  </div>
+
+</body>
+<script>
+  let timerId;
+
+  function timeUpdate() {
+    let clock = document.querySelector('.clock');
+    let timeE = new DocumentFragment();
+    let date = new Date();
+    let hours = date.getHours();
+    if (hours < 10) hours = '0' + hours;
+    clock.children[0].innerHTML = '<p class="hour">' + hours + '</p>';
+    let minutes = date.getMinutes();
+    if (minutes < 10) minutes = '0' + minutes;
+    clock.children[1].innerHTML = '<p class="min">' + minutes + '</p>';
+    let seconds = date.getSeconds();
+    if (seconds < 10) seconds = '0' + seconds;
+    clock.children[2].innerHTML = '<p class="s">' + seconds + '</p>';
+  }
+
+  function clockStart() {
+    timerId = setInterval(timeUpdate, 1000);
+    timeUpdate(); // <--  马上开始，不要等 1 秒后直到 setInterval 开始后才开始
+  }
+
+  function clockStop() {
+    clearInterval(timerId);
+  }
+
+  clockStart();
+</script>
+
+</html>

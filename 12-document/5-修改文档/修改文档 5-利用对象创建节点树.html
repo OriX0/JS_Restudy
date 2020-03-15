@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>利用对象创建节点树</title>
+</head>
+
+<body>
+  <div id="container"></div>
+</body>
+<script>
+  let demo = document.createElement('ul');
+  console.log(demo);
+  console.log(demo.constructor);
+  console.log(Array.isArray(demo));
+  let data = {
+    "Fish": {
+      "trout": {},
+      "salmon": {}
+    },
+
+    "Tree": {
+      "Huge": {
+        "sequoia": {},
+        "oak": {}
+      },
+      "Flowering": {
+        "apple tree": {},
+        "magnolia": {}
+      }
+    }
+  };
+
+  function createTree(container, data) {
+    container.innerHTML = createTreeText(data);
+  }
+
+  function createTreeText(obj) {
+    let li = '';
+    let ul;
+    for (let key in obj) {
+      li += '<li>' + key + createTreeText(obj[key]) + 'li';
+    }
+    if (li) {
+      ul = '<ul>' + li + '</ul>'
+    }
+    return ul || null
+  }
+  let container = document.getElementById('container');
+  createTree(container, data);
+  // 方法2
+  function createTreeText2(obj) {
+    // 判断该对象的键个数 是否为0 为
+    if (!Object.keys(obj)) return;
+    // 创建外部ul
+    let ul = document.createElement('ul');
+    for (let key in obj) {
+      let li = document.createElement('li');
+      li.innerHTML = key;
+      let childUl = createTreeText2(obj[key]);
+      if (childrenUl) {
+        li.append(childrenUl);
+      }
+      ul.append(li);
+    }
+
+    return ul;
+  }
+</script>
+
+</html>

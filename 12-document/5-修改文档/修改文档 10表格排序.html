@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+
+  <a href="https://www.runoob.com/jsref/coll-table-tbodies.html">知识点 tBodies</a>
+
+  <hr>
+  <table id="table">
+    <tr>
+      <th>Name</th>
+      <th>Surname</th>
+      <th>Age</th>
+    </tr>
+    <tr>
+      <td>John</td>
+      <td>Smith</td>
+      <td>10</td>
+    </tr>
+    <tr>
+      <td>Pete</td>
+      <td>Brown</td>
+      <td>15</td>
+    </tr>
+    <tr>
+      <td>Ann</td>
+      <td>Lee</td>
+      <td>5</td>
+    </tr>
+  </table>
+</body>
+<script>
+  console.log(table.tBodies.length);
+  // 获取
+  let sortedRows = Array.from(table.rows)
+    .slice(1) // 数据截取 非表投行
+    // 根据每行的第一列数据 这里是name
+    .sort((rowA, rowB) => rowA.cells[0].innerHTML > rowB.cells[0].innerHTML ? 1 : -1);
+  //tBodies集合 这里没有tbody标签 所以就只有一个 
+  // console.log(table.tBodies.length);
+  // console.log(table.tBodies[0].innerHTML);
+
+  table.tBodies[0].append(...sortedRows);
+</script>
+
+</html>

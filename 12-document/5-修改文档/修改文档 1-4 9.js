@@ -62,33 +62,12 @@ function promptToList () {
   }
 }
 
-/*5---
-编写一个函数 createTree 将嵌套的对象生成 ul/li 的嵌套列表。
+/*9---
+编写需要插入的文本代码 <li>2</li><li>3</li>，插入到两个 <li> 之中：
 
-语句：
-let container = document.getElementById('container');
-createTree(container, data); // 在 container 中创建树。*/
-let data = {
-  "Fish": {
-    "trout": {},
-    "salmon": {}
-  },
-
-  "Tree": {
-    "Huge": {
-      "sequoia": {},
-      "oak": {}
-    },
-    "Flowering": {
-      "apple tree": {},
-      "magnolia": {}
-    }
-  }
-};
-
-// function createTree(container,data){
-//   container.innerHTML
-// }
-
-// let container = document.getElementById('container');
-// createTree(container, data);
+<ul id="ul">
+  <li id="one">1</li>
+  <li id="two">4</li>
+</ul>
+*/
+one.insertAdjacentHTML('afterend', '<li>2</li><li>3</li>');

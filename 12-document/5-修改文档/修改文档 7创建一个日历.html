@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    #calendar {
+      height: 500px;
+    }
+
+    table {
+      border-collapse: collapse;
+    }
+
+    td,
+    th {
+      border: 1px solid black;
+      padding: 3px;
+      text-align: center;
+    }
+
+    th {
+      font-weight: bold;
+      background-color: #E6E6E6;
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <div id="calendar">
+
+  </div>
+
+  <script>
+    // 获取今天是星期几 
+    function getDayOfWeek(date) {
+      let day = date.getDay();
+      if (day == 0) return 6;
+      return day - 1;
+    }
+
+    function createCalendar(elem, year, month) {
+      mon = month - 1; //0-11
+      let d = new Date(year, mon);
+      // 构建表头
+      let table = '<table><tr><th>MO</th><th>TU</th><th>WE</th><th>TH</th><th>FR</th><th>SA</th><th>SU</th></tr><tr>';
+      // 填开始的空白处
+      for (let i = 0; i < getDayOfWeek(d); i++) {
+        table += '<td></td>';
+      }
+      // 循环填入数字 
+      while (d.getMonth() === mon) {
+        table += '<td>' + d.getDate() + '</td>'
+        if (getDayOfWeek(d) % 7 == 6) {
+          console.log(d);
+          table += '</tr><tr>';
+        }
+        d.setDate(d.getDate() + 1);
+      }
+      // 循环结束 补充尾部剩余的空格
+      if (getDayOfWeek(d) != 0) {
+        for (let j = getDayOfWeek(d); j < 7; j++) {
+          table += '<td></td>';
+        }
+      }
+      table += '</tr></table>';
+      // console.log(table);
+      elem.innerHTML = table;
+    }
+    // let calendar = document.getElementById('calendar');
+    createCalendar(calendar, 2012, 9);
+  </script>
+</body>
+
+</html>

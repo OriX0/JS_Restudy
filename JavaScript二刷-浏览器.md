@@ -495,3 +495,147 @@ document.body.sayHi(); // Hello, I'm BODY
   alert(document.body.dataset.about); // Elephants
 </script>
 ```
+
+## 修改文档
+
+### 生成元素
+
+```
+document.createElement(tag)
+```
+
+用给定的标签创建一个新*元素节点（element node）*：
+
+```
+document.createTextNode(text)
+```
+
+用给定的文本创建一个**文本节点**
+
+### 插值
+
+#### 从父元素插值 
+
+**所有这些插入节点的操作都会返回节点。**
+
+```
+parentElem.appendChild(node)
+```
+
+将 `node` 作为 `parentElem` 最后一个子元素。
+
+```
+parentElem.insertBefore(node, nextSibling)
+```
+
+在 `parentElem` 的 `nextSibling` 插入 `node`。
+
+```
+parentElem.replaceChild(node, oldChild)
+```
+
+将 `parentElem` 的 `oldChild` 替换为 `node`。
+
+#### 元素插入
+
+- `node.append(...nodes or strings)` —— 在 `node` 末尾插入节点或者字符串，
+- `node.prepend(...nodes or strings)` —— 在 `node` 开头插入节点或者字符串，
+- `node.before(...nodes or strings)` —— 在 `node` 前面插入节点或者字符串，
+- `node.after(...nodes or strings)` —— 在 `node` 后面插入节点或者字符串，
+- `node.replaceWith(...nodes or strings)` —— 将 `node` 替换为节点或者字符串。
+
+所有这些方法都接受 DOM 节点或者文本字符串列表形式。如果给定的是一个字符串，那么它将以文本节点（text node）形式插入。
+
+#### 相邻插入
+
+`elem.insertAdjacentHTML(where, html)`。
+
+**该方法第一个参数是代码字符串，指定相对于 `elem` 的插入位置**，必须是以下四个值之一：
+
+- `"beforebegin"` —— 在 `elem` 开头位置前插入 `html`，
+- `"afterbegin"` —— 在 `elem` 开头位置后插入 `html`（译注：即 `elem` 元素内部的第一个子节点之前），
+- `"beforeend"` —— 在 `elem` 结束位置前插入 `html`（译注：即 `elem` 元素内部的最后一个子节点之后），
+- `"afterend"` —— 在 `elem` 结束位置后插入 `html`。
+
+**第二个参数是 HTML 字符串，会以 HTML 的形式插入到页面中。**
+
+##### 变种
+
+- `elem.insertAdjacentText(where, text)` —— 一样的语法，只不过把 `text` 作为“文本”直接插入到 HTML 中，
+- `elem.insertAdjacentElement(where, elem)` —— 一样的语法，只不过插入的是一个元素。
+
+### 克隆节点
+
+- `elem.cloneNode(true)` 方法用来对一个元素进行“深”克隆 —— 包括所有特性和子元素。
+- `elem.cloneNode(false)` 方法只克隆该元素本身，不对子元素进行克隆。
+
+
+
+例子
+
+```markup
+<script>
+  let div2 = div.cloneNode(true); // 克隆信息
+  div2.querySelector('strong').innerHTML = 'Bye there!'; // 改变克隆信息
+
+  div.after(div2); // 显示克隆信息在已经存在的 div 后
+</script>
+```
+
+### 移除
+
+从 `parentElem` 中移除 `node`（假设它是元素中的子元素）。
+
+```
+parentElem.removeChild(node)
+```
+
+从当前位置移除 `node`。
+
+```
+node.remove() 
+```
+
+**所有插入操作都会从节点原来的位置把节点移除掉。**
+
+### document.write
+
+**只能在页面加载的时候调用 `document.write`**
+
+如果在加载完成以后，渲染好的页面会被擦除。
+
+例子
+
+```markup
+<p>Somewhere in the page...</p>
+<script>
+  document.write('<b>Hello from JS</b>');
+</script>
+<p>The end</p>
+```
+
+### 文档片段 很少明确用
+
+`DocumentFragment` 是一个特殊的 DOM 节点，用于传递节点列表的包装器。 
+
+我们可以将其他节点附加到它上面，但是当我们将其插入到某个地方的时候，会以其内容的形式插入。
+
+```html
+<ul id="ul"></ul>
+
+<script>
+function getListContent() {
+  let fragment = new DocumentFragment();
+
+  for(let i=1; i<=3; i++) {
+    let li = document.createElement('li');
+    li.append(i);
+    fragment.append(li);
+  }
+
+  return fragment;
+}
+
+ul.append(getListContent()); // (*)
+</script>
+```
