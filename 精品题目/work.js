@@ -76,3 +76,9 @@ new Promise(function (resolve, reject) {
   clear(elem); // 清除列表
 </script>
 */
+
+/*不同点：CSS 宽度与 clientWidth
+重要程度: 5
+getComputedStyle(elem).width 与 elem.clientWidth 之间的差别在哪？
+
+指出至少三种不同点，越多越好。*/

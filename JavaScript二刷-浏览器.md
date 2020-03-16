@@ -639,3 +639,240 @@ function getListContent() {
 ul.append(getListContent()); // (*)
 </script>
 ```
+
+## 样式和类
+
+### className  全部替换
+
+ `elem.className` 对应于 `"class"` 特性
+
+如果我们为 `elem.className` 分配一些东西，它将替换所有的类字符串
+
+### classList  像list一样灵活操作
+
+`elem.classList` 是一个特殊对象，它拥有 `add/remove/toggle` 的类方法。
+
+- `elem.classList.add/remove("class")` —— 添加/移除类。
+- `elem.classList.toggle("class")` —— 如果类存在就移除，否则添加。
+- `elem.classList.contains("class")` —— 返回 `true/false`，检查给定类。
+
+此外，`classList` 是可迭代的，因此我们可以像下述方法一样列出所有类：
+
+```html
+<body class="main page">
+  <script>
+    for (let name of document.body.classList) {
+      alert(name); // main, and then page
+    }
+  </script>
+</body>
+```
+
+### 元素样式
+
+对于多单词，使用 camelCase：
+
+```javascript
+background-color  => elem.style.backgroundColor
+z-index           => elem.style.zIndex
+border-left-width => elem.style.borderLeftWidth
+```
+
+像 `-moz-border-radius`，`-webkit-border-radius` 这样的浏览器前缀，也遵循同样的规则，比如：
+
+```javascript
+button.style.MozBorderRadius = '5px';
+button.style.WebkitBorderRadius = '5px';
+```
+
+### 重置样式属性
+
+```javascript
+// if we run this code, the <body> "blinks"
+document.body.style.display = "none"; // hide
+
+setTimeout(() => document.body.style.display = "", 1000); // 恢复正常
+```
+
+### 以字符串的形式分配样式
+
+`style.cssText`
+
+```html
+<div id="div">Button</div>
+
+<script>
+  // we can set special style flags like "important" here
+  div.style.cssText=`color: red !important;
+    background-color: yellow;
+    width: 100px;
+    text-align: center;
+  `;
+
+  alert(div.style.cssText);
+</script>
+```
+
+通过设置属性：`div.setAttribute('style', 'color: red...')` 也可以实现同样的目的。
+
+### 在js中修改css必须带上单位
+
+### 计算样式 读取样式
+
+**`style` 属性仅对 `"style"` 属性值进行操作，而不是任何 CSS 级联 无法读取css中部署的css。**
+
+
+
+```javascript
+getComputedStyle(element[, pseudo])
+```
+
+element
+
+用来读取样式值的的元素。
+
+pseudo
+
+假如给定一个伪元素，例如：`::before`。空字符串或无参意味着元素本身。
+
+```html
+<head>
+  <style> body { color: red; margin: 5px } </style>
+</head>
+<body>
+
+  <script>
+    let computedStyle = getComputedStyle(document.body);
+
+    // 现在我们可以读出页边距和颜色了
+
+    alert( computedStyle.marginTop ); // 5px
+    alert( computedStyle.color ); // rgb(255, 0, 0)
+  </script>
+
+</body>
+```
+
+#### 读取时必须使用完整的属性名 
+
+##### 奇怪的特性
+
+比如，一些浏览器（Chrome）在下述文档中显示 `10px`，一些浏览器（Firefox）—— 则效果不同：
+
+```html
+<style>
+  body {
+    margin: 10px;
+  }
+</style>
+<script>
+  let style = getComputedStyle(document.body);
+  alert(style.margin); // 在 Firefox 中是空字符串
+</script>
+```
+
+### **“Visited” links styles are hidden!**
+
+CSS 中也有一个限制，禁止在 `:visited` 中应用更改几何的样式。这是为了保证一个不好的页面没有办法来测试是否访问了链接，从而窥探隐私。
+
+
+
+## 元素的尺寸和滚动
+
+### 几何学
+
+![image-20200317003822432](C:\Project\WEB\js enhance\JavaScript二刷-浏览器.assets\image-20200317003822432.png)
+
+### 最外层的几何属性
+
+#### offsetParent
+
+`offsetParent` 是最近的祖先元素:
+
+1. CSS 定位（`position` 为 `absolute`、`relative` 或 `fixed`），
+2. 或者 `<td>`、`<th>` `<table>`，
+3. 或者 `body`
+
+##### offsetnull的值为空的情况
+
+1. 未显示的元素（`display:none` 或者不在文档中）。
+2. `<body>` 与 `<html>`。
+3. `position:fixed` 的元素。
+
+#### offsetLeft/Top 内部元素和外部的差
+
+```HTML
+<main style="position: relative" id="main">
+  <article>
+    <div id="example" style="position: absolute; left: 180px; top: 180px">...</div>
+  </article>
+</main>
+<script>
+  alert(example.offsetParent.id); // main
+  alert(example.offsetLeft); // 180 (note: a number, not a string "180px")
+  alert(example.offsetTop); // 180
+</script>
+```
+
+### 外部的高度和宽度
+
+#### offsetWidth
+
+外部宽度 = 边框x2+内边距x2+内容+滚动条
+
+`offsetWidth = border*2+padding*2+content+scoll`
+
+#### offsetHeight
+
+外部高度= 边框x2+内边距x2+内容 +[滚动条]（如果是横向）
+
+#### 未显示的几何元素的属性值为0/null
+
+用它来检查一个元素是否被隐藏，像这样：
+
+```javascript
+function isHidden(elem) {
+  return !elem.offsetWidth && !elem.offsetHeight;
+}
+```
+
+### 内边框获取 非单border还要考虑滚动条
+
+- `clientLeft = 25` ——————左边框宽度+【滚动条宽度】
+- `clientTop = 25` —————— 上边框宽度+【滚动条宽度】
+
+### 元素边框内区域大小
+
+区域宽度 = 内容+paddingx2+[滚动条]
+
+`clienWidth = conent+padding*2+[scoll]`
+
+区域高度= 内容+paddingx2+[滚动条]
+
+### 可滚动区域大小
+
+`scrollWidth/scrollHeight` 包括滚动（隐藏）部分：
+
+
+
+```javascript
+// 扩展元素高度到完全高度
+element.style.height = `${element.scrollHeight}px`;
+```
+
+### 已滚动区域
+
+`scrollTop` 就是 “竖直滚动了多少” 的意思。
+
+`scrollLeft` 就是 “横向滚动了多少” 的意思。
+
+
+
+### `getComputedStyle(elem).width` 与 `elem.clientWidth` 之间的差别
+
+不同点：
+
+1. `clientWidth` 值是数值，然而 `getComputedStyle(elem).width` 返回一个包含 `px` 的字符串。
+2. `getComputedStyle` 可能返回非数值的结果，例如内联元素的 `"auto"`。
+3. `clientWidth` 是元素的内部内容区域加上内间距，而 CSS 宽度（具有标准的 `box-sizing`）是内部**不包括内间距**的空间区域。
+4. 如果有一个滚动条，一般浏览器保留它的空间，有的浏览器从 CSS 宽度中减去这个空间（因为它不再用于内容），而有些则不这样做。`clientWidth` 属性总是相同的：如果保留了滚动条，那么它的宽度将被删去。
