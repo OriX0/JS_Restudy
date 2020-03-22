@@ -876,3 +876,107 @@ element.style.height = `${element.scrollHeight}px`;
 2. `getComputedStyle` 可能返回非数值的结果，例如内联元素的 `"auto"`。
 3. `clientWidth` 是元素的内部内容区域加上内间距，而 CSS 宽度（具有标准的 `box-sizing`）是内部**不包括内间距**的空间区域。
 4. 如果有一个滚动条，一般浏览器保留它的空间，有的浏览器从 CSS 宽度中减去这个空间（因为它不再用于内容），而有些则不这样做。`clientWidth` 属性总是相同的：如果保留了滚动条，那么它的宽度将被删去。
+
+## window的尺寸和滚动
+
+### 窗口的宽度/高度
+
+`document.documentElement.clientHeight/clientWidh `返回文档可见部分（可用内容）的宽高
+
+`window.innerWidth/innerHeight` 是忽略滚动条。
+
+### 文档的高度/宽度
+
+#### 文档元素的宽高是 
+
+`documentElement.clientWidth/Height`
+
+#### 可靠的窗口大小
+
+```javascript
+let scrollHeight = Math.max(
+  document.body.scrollHeight, document.documentElement.scrollHeight,
+  document.body.offsetHeight, document.documentElement.offsetHeight,
+  document.body.clientHeight, document.documentElement.clientHeight
+);
+```
+
+### 得到当前滚动
+
+#### 竖直方向的滚动
+
+`window.pageYOffset`
+
+#### 水平方向的滚动
+
+`window.pageXOffset`
+
+### 通用的滚动解决方案
+
+#### scrollBy
+
+ `scrollBy(x,y)` 滚动页面至相对于现在位置的 (x, y) 位置。
+
+例如，`scrollBy(0,10)` 页面向下滚动 `10px`。
+
+#### scrollTo
+
+ `scrollTo(pageX,pageY)` 滚动页面至相对于文档的左上角的 (pageX, pageY) 位置。就好像设置 `scrollLeft/scrollTop`。
+
+### 滚动到视图
+
+以元素位置为基准作为顶部或底部
+
+`elem.scrollIntoView(top)` 会使 `elem` 滚动到可视范围。它有一个结论：
+
+- 如果 `top=true`（默认值），页面滚动使 `elem` 会出现到窗口顶部。元素的上边缘与窗口顶部对齐。
+- 如果 `top=false`，则页面滚动使 `elem` 会出现在窗口底部。元素的下边缘与窗口底部对齐。
+
+### 滚动的禁止和恢复 
+
+禁止
+
+`document.body.style.overflow = "hidden"`
+
+恢复
+
+`document.body.style.overflow = ''`
+
+## 坐标
+
+### 获取元素坐标对象
+
+`elem.getBoundingClientRect()` 方法返回一个 `elem` 的窗口坐标对象
+
+- `top` — 元素顶部边缘的 Y 坐标
+- `left` — 元素左边边缘的 X 坐标
+- `right` — 元素右边边缘的 X 坐标
+- `bottom` — 元素底部边缘的 Y 坐标
+
+### 基于坐标返回顶层元素
+
+调用 `document.elementFromPoint(x, y)` 方法返回窗口坐标 `(x, y)` 中最顶层的元素。
+
+```javascript
+let elem = document.elementFromPoint(x, y);
+```
+
+#### 如果坐标为负数或者超出 则返回null
+
+### 文档坐标 
+
+- `pageY` = `clientY` + 文档垂直部分滚动的高度。
+- `pageX` = `clientX` + 文档水平部分滚动的宽度。
+
+```javascript
+// 获取元素的文档坐标
+function getCoords(elem) {
+  let box = elem.getBoundingClientRect();
+
+  return {
+    top: box.top + pageYOffset,
+    left: box.left + pageXOffset
+  };
+}
+```
+

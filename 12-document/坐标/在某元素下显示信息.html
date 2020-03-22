@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<style>
+  #coords {
+    margin: 100px auto;
+    height: 300px;
+    width: 300px;
+    background-image: linear-gradient(35deg, #CCFFFF, #FFCCCC);
+    border-radius: 20px;
+  }
+</style>
+
+<body>
+  <div id="coords"></div>
+</body>
+<script>
+  let coords = document.getElementById('coords');
+
+  function createMessageUnder(elem, html) {
+    let message = document.createElement('div');
+    message.setAttribute('style', 'position:absolute;color:red;')
+    // 分配坐标
+    let coordsP = elem.getBoundingClientRect();
+    message.style.top = coordsP.bottom + 'px';
+    message.style.left = coordsP.left + 'px';
+    message.innerHTML = html;
+    return message;
+  }
+  // 在文档中添加 message 保持 5 秒
+  let message = createMessageUnder(coords, 'Hello, world!');
+  document.body.append(message);
+  setTimeout(() => message.remove(), 5000);
+</script>
+
+</html>
