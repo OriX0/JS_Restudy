@@ -1,0 +1,72 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <style>
+    #field {
+      position: relative;
+      width: 200px;
+      height: 150px;
+      border: 10px solid black;
+      background-color: #00FF00;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    #ball {
+      position: absolute;
+      left: 0;
+      top: 0;
+      transition: 1s all;
+    }
+  </style>
+</head>
+
+<body style="height:2000px">
+
+  Click on a field to move the ball there.
+  <br> The ball should never leave the field.
+
+
+  <div id="field">
+    <img src="https://en.js.cx/clipart/ball.svg" id="ball"> . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+    . . . . . . . . .
+    . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . . . . . . . .
+  </div>
+
+
+</body>
+<script>
+  let field = document.getElementById('field');
+
+  let ball = document.getElementById('ball');
+
+  field.onclick = function (event) {
+    let position = [event.clientX, event.clientY];
+    // 取得草地的元素坐标对象
+    let fieldCoords = field.getBoundingClientRect();
+    // 设定ball的坐标
+    let ballCoords = {
+      // 点击位置-草地top-草地边框 -球高/宽的一半 使其居中
+      top: event.clientY - fieldCoords.top - field.clientTop - ball.clientHeight / 2,
+      left: event.clientX - fieldCoords.left - field.clientTop - ball.clientWidth / 2
+    }
+    if (ballCoords.top < 0) ballCoords.top = 0;
+    if (ballCoords.left < 0) ballCoords.left = 0;
+    if (ballCoords.left + ball.clientWidth > field.clientWidth) {
+      ballCoords.left = field.clientWidth - ball.clientWidth;
+    }
+    if (ballCoords.top + ball.clientHeight > field.clientHeight) {
+      ballCoords.top = field.clientHeight - ball.clientHeight;
+    }
+
+    ball.style.left = ballCoords.left + 'px';
+    ball.style.top = ballCoords.top + 'px';
+
+  }
+</script>
+
+</html>

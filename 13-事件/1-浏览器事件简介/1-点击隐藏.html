@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <button>click to hide the text</button>
+  <div id="text">Text</div>
+</body>
+<script>
+  let btn = document.querySelector('button');
+  btn.onclick = function () {
+    let textE = document.getElementById('text');
+    textE.hidden = !textE.hidden;
+  }
+</script>
+
+</html>

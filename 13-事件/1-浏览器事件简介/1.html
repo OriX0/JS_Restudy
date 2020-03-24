@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>毫州概况</title>
+  <!-- <script src="proj6.js" type="text/javascript"></script> -->
+  <link rel="stylesheet" type="text/css" href="proj6.css">
+
+</head>
+
+<body>
+
+  <header>
+    <nav>
+      <ul id="navList" class="navList">
+        <li><a href="#">首页</a></li>
+        <li><a href="#">关于我们</a></li>
+        <li><a href="#">毫州概况</a></li>
+        <li><a href="#">新闻动态</a></li>
+        <li><a href="#">旗下景区</a></li>
+        <li><a href="#">旅游休闲</a></li>
+        <li><a href="#">联系我们</a></li>
+      </ul>
+    </nav>
+  </header>
+  <script>
+    let lis = document.querySelectorAll('li');
+    for (let li of lis) {
+      li.onclick = function () {
+        alert('hello');
+      }
+    }
+  </script>
+
+  <script>
+    let lis = document.querySelectorAll('li');
+    for (let li of lis) {
+      li.onclick = function () {
+        alert('x');
+      }
+    }
+  </script>
+
+</body>
+
+</html>

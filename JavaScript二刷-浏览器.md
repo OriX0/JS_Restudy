@@ -980,3 +980,226 @@ function getCoords(elem) {
 }
 ```
 
+# 事件
+
+## 浏览器事件
+
+**鼠标事件：**
+
+- `click` —— 当鼠标点击一个元素时（触摸屏设备在 tap 时生成）。
+- `contextmenu` —— 当鼠标右击一个元素时。
+- `mouseover` / `mouseout` —— 当鼠标光标移入或移出一个元素时。
+- `mousedown` / `mouseup` —— 当鼠标按下/释放一个元素时。
+- `mousemove` —— 当鼠标移出时。
+
+**表单元素事件**：
+
+- `submit` —— 当访问者提交了一个 `` 时。
+- `focus` —— 当访问者聚焦一个元素时，例如 ``。
+
+**键盘事件**：
+
+- `keydown` and `keyup` —— 当访问者按下然后松开按钮时。
+
+**Document 事件**：
+
+- `DOMContentLoaded` —— 当加载和处理 HTML 时，DOM 将会被完整地构建。
+
+**CSS 事件**：
+
+- `transitionend` —— 当 CSS 动画完成时。
+
+
+
+### 事件处理器
+
+#### HTML 属性分发
+
+处理器可以设置在 HTML 名为 `on<event>` 的属性中
+
+```html
+<input value="Click me" onclick="alert('Click!')" type="button">
+```
+
+#### DOM 属性分发 
+
+ `on<event>` 来分发处理器
+
+```html
+<input id="elem" type="button" value="Click me">
+<script>
+  elem.onclick = function() {
+    alert('Thank you');
+  };
+</script>
+```
+
+
+
+**处理器总是在 DOM 属性中：HTML 属性只是初始化它的方法之一**
+
+移除处理器 —— 分发 `elem.onclick = null`
+
+### 处理器中的`this`的值就是元素
+
+### 事件分发需要注意的
+
+#### 是否带括号
+
+```javascript
+// DOM 
+button.onclick = sayThanks;
+
+//HTML
+<input type="button" id="button" onclick="sayThanks()">
+```
+
+#### **不要为处理器使用 `setAttribute`**。
+
+这样的调用会失效：
+
+```javascript
+// 单击 <body> 将产生错误,
+// 因为属性总是字符串，函数就变成了字符串。
+document.body.setAttribute('onclick', function() { alert(1) });
+```
+
+#### DOM属性大小写敏感
+
+### addEventistener 分发多个处理器
+
+语法：
+
+```javascript
+element.addEventListener(event, handler[, phase]);
+// event:事件名
+// handler：处理器函数
+// phase:参数
+```
+
+#### 添加多个事件
+
+```html
+<input id="elem" type="button" value="Click me"/>
+
+<script>
+  function handler1() {
+    alert('Thanks!');
+  };
+
+  function handler2() {
+    alert('Thanks again!');
+  }
+
+  elem.onclick = () => alert("Hello");
+  elem.addEventListener("click", handler1); // Thanks!
+  elem.addEventListener("click", handler2); // Thanks again!
+</script>
+```
+
+#### 移除处理器
+
+使用 `removeEventListener` 移除处理器 并且要将函数存储在一个变量中：
+
+```javascript
+function handler() {
+  alert( 'Thanks!' );
+}
+
+input.addEventListener("click", handler);
+// ....
+input.removeEventListener("click", handler);
+```
+
+#### 有些事件只能通过addEventListener 来监听
+
+有些事件不能通过 DOM 属性分配。必须使用 `addEventListener`。
+
+事件 `transitionend`（CSS 动画完成）就是如此。
+
+##### 例子
+
+```html
+<style>
+  input {
+    transition: width 1s;
+    width: 100px;
+  }
+
+  .wide {
+    width: 300px;
+  }
+</style>
+
+<input type="button" id="elem" onclick="this.classList.toggle('wide')" value="Click me">
+
+<script>
+  elem.ontransitionend = function() {
+    alert("DOM property"); // doesn't work
+  };
+
+  elem.addEventListener("transitionend", function() {
+    alert("addEventListener"); // 动画完成时显示
+  });
+</script>
+```
+
+### 事件对象
+
+当事件发生时，浏览器会创建一个**事件对象**，将信息放入其中，并将其作为参数传入处理器。
+
+#### 属性
+
+`event` 对象的一些属性 还有很多其他属性 取决于事件类型：
+
+- `event.type`
+
+  事件类型，这里是 `"click"`。
+
+- `event.currentTarget`
+
+  处理事件的元素。这与 `this` 相同，除非你将 `this` 绑定到其他东西上，之后 `event.currentTarget` 就会有效了。
+
+- `event.clientX / event.clientY`
+
+  鼠标事件中光标相对于窗口的坐标。
+
+#### 可通过HTML访问
+
+如果我们在 HTML 中分发一个处理器，我们也可以使用 `event` 对象，如下所示：
+
+```html
+<input type="button" onclick="alert(event.type)" value="Event type">
+```
+
+### 对象处理器
+
+使用 `addEventListener` 将对象赋值为事件处理器
+
+当 `addEventListener` 接收一个对象作为处理器时候，就会调用 `object.handleEvent(event)` 来处理事件
+
+#### 使用一个类进行包装
+
+```html
+<button id="elem">Click me</button>
+
+<script>
+  class Menu {
+    handleEvent(event) {
+      switch(event.type) {
+        case 'mousedown':
+          elem.innerHTML = "Mouse button pressed";
+          break;
+        case 'mouseup':
+          elem.innerHTML += "...and released.";
+          break;
+      }
+    }
+  }
+
+  let menu = new Menu();
+  elem.addEventListener('mousedown', menu);
+  elem.addEventListener('mouseup', menu);
+</script>
+```
+

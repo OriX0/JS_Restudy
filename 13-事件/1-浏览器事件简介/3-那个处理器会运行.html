@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <button id="button">click</button>
+</body>
+<script>
+  button.addEventListener("click", () => alert("1")); //  触发
+
+  button.removeEventListener("click", () => alert("1")); // 并没移除掉 需保存在变量中
+  button.onclick = () => alert(2); // 替换了整个整体 并触发
+</script>
+
+</html>
