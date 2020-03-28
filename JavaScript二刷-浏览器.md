@@ -153,19 +153,19 @@ alert( document.documentElement.parentElement ); // null
 
 #### table元素 
 
-- `table.rows` — 用于表示表中 元素的集合。
-- `table.caption/tHead/tFoot` — 用于访问元素 `、、。
-- `table.tBodies` — 元素的集合（根据标准该元素数量可以很多）。
+- `table.rows` — 用于表示表中`<tr>` 元素的集合。
+- `table.caption/tHead/tFoot` — 用于访问元素 `<caption>、<thead>、<tfoot>`。
+- `table.tBodies` —`<tbody>` 元素的集合（根据标准该元素数量可以很多）。
 
 #### thead tfoot tbody  元素提供了 `rows` 属性
 
-- `tbody.rows` — 表内部 元素的集合。
+- `tbody.rows` — 表内部`<tr>` 元素的集合。
 
 #### tr
 
-- `tr.cells` — 在给定 元素下 ` 和 ` 单元格的集合。
-- `tr.sectionRowIndex` — 在封闭的 中 的编号。
-- `tr.rowIndex` — 在表中 元素的编号。
+- `tr.cells` — 在给定`<tr>` 元素下 `<td>` 和 ` <th>`单元格的集合。
+- `tr.sectionRowIndex` — 给定`<tr>`在封闭的`<thead>/<tbody>/<tfoot>` 中 的编号。
+- `tr.rowIndex` — 在表中`<tr>` 元素的编号。
 
 #### td和th
 
@@ -1203,3 +1203,277 @@ input.removeEventListener("click", handler);
 </script>
 ```
 
+## 冒泡和捕获
+
+### 冒泡
+
+**当一个事件发生在一个元素上，它会首先运行在该元素上的处理程序，然后运行其父元素上的处理程序，然后一直向上到其他祖先上的处理程序。**
+
+#### 几乎所有的事件都会冒泡 
+
+大部分事件都会冒泡  但比如`focus`事件是不会冒泡的
+
+### 目标元素
+
+**引发事件的那个嵌套层级最深的元素被称为目标元素,可以通过 `event.target` 访问。**
+
+**目标元素的名称：`event.target.tagName`** 
+
+**注意结果的均为大写 **
+
+注意与 `this`（=`event.currentTarget`）之间的区别：
+
+- `event.target` —— 是引发事件的“目标”元素，它在冒泡过程中不会发生变化。
+- `this` —— 是“当前”元素，其中有一个当前正在运行的处理程序。
+
+### 停止冒泡  慎用
+
+用于停止冒泡的方法是 `event.stopPropagation()`
+
+```html
+<body onclick="alert(`the bubbling doesn't reach here`)">
+  <button onclick="event.stopPropagation()">Click me</button>
+</body>
+```
+
+#### 阻止多个处理程序
+
+如果一个元素在一个事件上有多个处理程序，即使其中一个停止冒泡，其他处理程序仍会执行。
+
+换句话说，`event.stopPropagation()` 停止向上移动，但是当前元素上的其他处理程序都会继续运行。
+
+有一个 `event.stopImmediatePropagation()` 方法，可以用于停止冒泡，并阻止当前元素上的处理程序运行。使用该方法之后，其他处理程序就不会被执行。
+
+### 获取当前的阶段
+
+- `event.eventPhase` —— 当前阶段（capturing=1，target=2，bubbling=3）。
+
+### 捕获 很少用
+
+[DOM 事件](http://www.w3.org/TR/DOM-Level-3-Events/)标准描述了事件传播的 3 个阶段：
+
+1. 捕获阶段（Capturing phase）—— 事件（从 Window）向下走近元素。
+2. 目标阶段（Target phase）—— 事件到达目标元素。
+3. 冒泡阶段（Bubbling phase）—— 事件从元素上开始冒泡。
+
+
+
+![image-20200326232042841](C:\Project\WEB\js enhance\JavaScript二刷-浏览器.assets\image-20200326232042841.png)
+
+点击 `td`，事件首先通过祖先链向下到达元素（捕获阶段），然后到达目标（目标阶段），最后上升（冒泡阶段），在途中调用处理程序。
+
+
+
+实现捕获阶段捕获事件，我们需要将处理程序的 `capture` 选项设置为 `true`：
+
+```javascript
+elem.addEventListener(..., {capture: true})
+// 或者，用 {capture: true} 的别名 "true"
+elem.addEventListener(..., true)
+```
+
+## 事件委托
+
+它通常用于为许多相似的元素添加相同的处理，但不仅限于此。
+
+算法：
+
+1. 在容器（container）上放一个处理程序。
+2. 在处理程序中 —— 检查源元素 `event.target`。
+3. 如果事件发生在我们感兴趣的元素内，那么处理该事件。
+
+好处：
+
+- 简化初始化并节省内存：无需添加许多处理程序。
+- 更少的代码：添加或移除元素时，无需添加/移除处理程序。
+- DOM 修改 ：我们可以使用 `innerHTML` 等，来批量添加/移除元素。
+
+事件委托也有其局限性：
+
+- 首先，事件必须冒泡。而有些事件不会冒泡。此外，低级别的处理程序不应该使用 `event.stopPropagation()`。
+- 其次，委托可能会增加 CPU 负载，因为容器级别的处理程序会对容器中任意位置的事件做出反应，而不管我们是否对该事件感兴趣。但是，通常负载可以忽略不计，所以我们不考虑它。
+
+#### 对于文档级别的委托 **使用的是 `addEventListener`**
+
+当我们将事件处理程序分配给 `document` 对象时，我们应该始终使用 `addEventListener`，而不是 `document.on`，因为后者会引起冲突：新的处理程序会覆盖旧的处理程序。
+
+#### 行为模式
+
+我们还可以使用事件委托将“行为（behavior）”以 **声明方式** 添加到具有特殊特性（attribute）和类的元素中。
+
+行为模式分为两个部分：
+
+1. 我们将自定义特性添加到描述其行为的元素。
+2. 用文档范围级的处理程序追踪事件，如果事件发生在具有特定特性的元素上 —— 则执行行为（action）。
+
+## 浏览器默认行为
+
+### 默认行为举例
+
+有很多默认的浏览器行为：
+
+- `mousedown` —— 开始选择（移动鼠标进行选择）。
+- 在 `` 上的 `click` —— 选中/取消选中的 `input`。
+- `submit` —— 点击 `` 或者在表单字段中按下 Enter 键会触发该事件，之后浏览器将提交表单。
+- `keydown` —— 按下一个按键可能会导致将字符添加到字段，或者触发其他行为。
+- `contextmenu` —— 事件发生在鼠标右键单击时，触发的行为是显示浏览器上下文菜单。
+- ……还有更多……
+
+### 阻止浏览器行为
+
+有两种方式来告诉浏览器我们不希望它执行默认行为：
+
+- 主流的方式是使用 `event` 对象。有一个 `event.preventDefault()` 方法。
+- 如果处理程序是使用 `on<event>`（而不是 `addEventListener`）分配的，那返回 `false` 也同样有效,唯一返回值有意义的事件处理程序
+
+
+
+#### 行为是个链 一旦阻止 后续事件将不会运行
+
+某些事件会相互转化。如果我们阻止了第一个事件，那就没有第二个事件了。
+
+例如，在 `<input>` 字段上的 `mousedown` 会导致在其中获得焦点，以及 `focus` 事件。如果我们阻止 `mousedown`事件，在这就没有焦点了。
+
+```html
+// 这里点击第二个没有任何效果
+<input value="Focus works" onfocus="this.value=''">
+<input onmousedown="return false" onfocus="this.value=''" value="Click me">
+```
+
+因为浏览器行为在 `mousedown` 上被取消
+
+
+
+### 告诉浏览器该行为不会被阻止 提升交互流畅度
+
+`addEventListener` 的可选项 `passive: true` 向浏览器发出信号，表明处理程序将不会调用 `preventDefault()`。
+
+如未声明 则页面的交互会有一断事件的判断期  加上这个选项后  提高了指定交互动作的流畅程度‘
+
+### 浏览器记录默认行为是否被阻止的属性
+
+如果默认行为被阻止，那么 `event.defaultPrevented` 属性为 `true`，否则为 `false`。
+
+#### 替代 停止冒泡一种方法
+
+使用 `event.defaultPrevented` 来代替，来通知其他事件处理程序，该事件已经被处理。
+
+```html
+<p>Right-click for the document menu (added a check for event.defaultPrevented)</p>
+<button id="elem">Right-click for the button menu</button>
+
+<script>
+  elem.oncontextmenu = function(event) {
+    event.preventDefault();
+    alert("Button context menu");
+  };
+
+  document.oncontextmenu = function(event) {
+    if (event.defaultPrevented) return;
+
+    event.preventDefault();
+    alert("Document context menu");
+  };
+</script>
+```
+
+
+
+## 生成自定义事件
+
+### 事件构造器
+
+```javascript
+let event = new Event(event type[, options]);
+```
+
+参数：
+
+- **event type** —— 可以是任何字符串，比如 `"click"` 或者我们自己喜欢的 `"hey-ho!"`。
+
+- **options** —— 具有两个可选属性的对象：
+
+  - `bubbles: true/false` —— 如果是 `true`，那么事件冒泡。
+  - `cancelable: true/false` —— 如果 `true`，那么“默认动作”就会被阻止。之后我们会看到对于自定义事件，这些意味着什么。
+
+  默认情况下，它们都是 false：`{bubbles: false, cancelable: false}`
+
+### 事件派遣
+
+事件对象被创建后，我们应该调用 `elem.dispatchEvent(event)` 在元素上“运行”它。
+
+```html
+<button id="elem" onclick="alert('Click!');">Autoclick</button>
+
+<script>
+  let event = new Event("click");
+  elem.dispatchEvent(event);
+</script>
+```
+
+### 区分是用户行为还是js生成
+
+`event.isTrusted` 属性为 `true`，则事件来自真实用户的动作，为 `false` ，则说明事件由脚本生成。
+
+### 鼠标事件 键盘事件 和其他内置
+
+- `UIEvent`（UI 事件）
+- `FocusEvent`（焦点事件）
+- `MouseEvent`（鼠标事件）
+- `WheelEvent`（滚轮事件）
+- `KeyboardEvent`（键盘事件）
+- ...
+
+如果我们想要创建这样的事件，我们应该使用它们而不是“新事件”。例如，`new MouseEvent("click")`。
+
+#### 正确的构造函数允许为该类型的事件指定标准属性
+
+```javascript
+let event = new MouseEvent("click", {
+  bubbles: true,
+  cancelable: true,
+  clientX: 100,
+  clientY: 100
+});
+
+alert(event.clientX); // 100
+```
+
+### new CustomEvent 可附加属性的自定义事件
+
+从技术上来说，CustomEvent和 `Event` 一样。除了一点不同之外。
+
+在第二个参数（对象）中，我们可以在事件中为我们想要传递的任何自定义信息添加一个附加的属性 `detail`。  
+
+`detail` 属性可以有任何数据 可以避免与其他事件冲突 
+
+```html
+<h1 id="elem">Hello for John!</h1>
+
+<script>
+  // additional details come with the event to the handler
+  elem.addEventListener("hello", function(event) {
+    alert(event.detail.name);
+  });
+
+  elem.dispatchEvent(new CustomEvent("hello", {
+    detail: { name: "John" }
+  });
+</script>
+```
+
+### 调用阻止默认行为
+
+如果 `cancelable:true` 被指定，那么我们可以在脚本生成的事件上调用 `event.preventDefault()`。
+
+
+
+如果事件有一个非标准的名称，那么浏览器就不知道它，而且它也没有“默认浏览器动作”。
+
+但是事件生成代码可能会在 `dispatchEvent` 之后安排一些动作。
+
+调用 `event.preventDefault()` 是处理器发送不应该执行这些操作的信号的一种方法
+
+### 事件是同步形式执行的
+
+事件通常都是同步处理的。也就是说：如果浏览器正在处理 `onclick`，而且在处理过程中发生了一个新的事件，那么它将等待，直到 `onclick` 处理完成。

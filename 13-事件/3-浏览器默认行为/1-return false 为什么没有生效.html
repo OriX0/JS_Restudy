@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <a href="https://w3.org" onclick=" return handler()">the browser will go to w3.org</a>
+
+</body>
+<script>
+  // 为什么这里的return false 没有阻止 默认行为---打开新的链接
+  function handler() {
+    alert("...");
+    return false;
+  }
+  // 因为该程序默认返回的false  即 a 中onclick = false  
+  // 修复只需要 加上return 即可
+
+  // 修复方法2 
+  /*function handler(event) {
+    alert('...');
+    event.preventDefault();
+  }
+  a中吧event参数 传入 */
+</script>
+
+</html>
