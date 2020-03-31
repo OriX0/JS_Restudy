@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <!-- <script src="https://en.js.cx/test/libs.js"></script> -->
+
+</head>
+<style>
+  .hours {
+    color: red;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  .minutes {
+    color: green;
+  }
+
+  .seconds {
+    color: blue;
+  }
+
+  .clock {
+    border: 1px dashed black;
+    padding: 5px;
+    display: inline-block;
+    background: yellow;
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  #tooltip {
+    position: absolute;
+    padding: 10px 20px;
+    border: 1px solid #b3c9ce;
+    border-radius: 4px;
+    text-align: center;
+    font: italic 14px/1.3 sans-serif;
+    color: #333;
+    background: #fff;
+    z-index: 100000;
+    box-shadow: 3px 3px 3px rgba(0, 0, 0, .3);
+  }
+</style>
+
+<body>
+
+  <div id="elem" class="clock">
+    <span class="hours">12</span> :
+    <span class="minutes">30</span> :
+    <span class="seconds">00</span>
+  </div>
+
+  <div id="tooltip" hidden>Tooltip</div>
+
+  <script>
+    // 定义 一个类
+    class HoverIntent {
+
+      constructor({
+        sensitivity = 0.1,
+        interval = 100,
+        elem,
+        out,
+        over
+      }) {
+        this.sensitivity = sensitivity;
+        this.interval = interval;
+        this.elem = elem;
+        this.out = out;
+        this.over = over;
+
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.onMouseOut = this.onMouseOut.bind(this);
+        this.onMouseOver = this.onMouseOver.bind(this);
+
+        this.trackSpeed = this.trackSpeed.bind(this);
+
+        elem.addEventListener("mouseover", this.onMouseOver);
+
+        elem.addEventListener("mouseout", this.onMouseOut);
+
+      }
+
+      onMouseOver(event) {
+        if (this.isOverElement) {
+          return;
+        }
+        this.isOverElement = true;
+        // 记录坐标和时间
+        this.prevX = event.pageX;
+        this.prevY = event.pageY;
+        this.prevTime = Date.now();
+        // 添加对鼠标移动的监听
+        elem.addEventListener('mousemove', this.onMouseMove);
+        // 设置速度计算的计时器
+        this.checkSpeedInterval = setInterval(this.trackSpeed, this.interval);
+      }
+
+      onMouseOut(event) {
+        // 如果 当前的指针位置元素为null(窗口外 或离开窗口) 即为假 或 元素不包含当前这个元素
+        if (!event.relatedTarget || !elem.contains(event.relatedTarget)) {
+          // 是否覆盖为假
+          this.isOverElement = false;
+          // 移除 对鼠标移动的监听
+          this.removeEventListener('mousemove', this.onMouseMove);
+          // 清除计算速度的定时器
+          clearInterval(this.checkSpeedInterval);
+        }
+        if (this.isHover) {
+          this.out.call(this.elem, event);
+          this.isHover = false;
+        }
+      }
+
+      onMouseMove(event) {
+        this.lastX = event.pageX;
+        this.lastY = event.pageY;
+        this.lastTime = Date.now();
+      }
+
+      trackSpeed() {
+
+        let speed;
+
+        if (!this.lastTime || this.lastTime == this.prevTime) {
+          speed = 0;
+        } else {
+          speed = Math.sqrt(
+            Math.pow(this.prevX - this.lastX, 2) +
+            Math.pow(this.prevY - this.lastY, 2)
+          ) / (this.lastTime - this.prevTime);
+        }
+
+        if (speed < this.sensitivity) {
+          clearInterval(this.checkSpeedInterval);
+          this.isHover = true;
+          this.over.call(this.elem, event);
+        } else {
+          this.prevX = this.lastX;
+          this.prevY = this.lastY;
+          this.prevTime = this.lastTime;
+        }
+      }
+
+      destroy() {
+        elem.removeEventListener('mousemove', this.onMouseMove);
+        elem.removeEventListener('mouseover', this.onMouseOver);
+        elem.removeEventListener('mouseout', this.onMouseOut);
+      }
+
+    }
+    new HoverIntent({
+      elem,
+      over() {
+        tooltip.style.left = elem.getBoundingClientRect().left + 5 + 'px';
+        tooltip.style.top = elem.getBoundingClientRect().bottom + 5 + 'px';
+        tooltip.hidden = false;
+      },
+      out() {
+        tooltip.hidden = true;
+      }
+    });
+  </script>
+
+</body>
+
+</html>

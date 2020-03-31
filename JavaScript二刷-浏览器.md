@@ -1477,3 +1477,199 @@ alert(event.clientX); // 100
 ### 事件是同步形式执行的
 
 事件通常都是同步处理的。也就是说：如果浏览器正在处理 `onclick`，而且在处理过程中发生了一个新的事件，那么它将等待，直到 `onclick` 处理完成。
+
+
+
+# 事件细节
+
+## 鼠标事件基础
+
+### 鼠标事件类型
+
+#### 简单事件
+
+常用的简单事件是：
+
+- `mousedown/mouseup`
+
+  在元素上单击/释放鼠标按钮。
+
+- `mouseover/mouseout`
+
+  鼠标指针从一个元素上移入/出。
+
+- `mousemove`
+
+  鼠标每次移动到元素上时都会触发事件。
+
+#### 复杂事件 由简单构成 提高便利性
+
+- `click`
+
+  如果使用鼠标左键，则在 `mousedown` 及 `mouseup` 相继触发后触发该事件。
+
+- `contextmenu`
+
+  如果使用鼠标右键，则在 `mousedown` 后触发。
+
+- `dblclick`
+
+  在对元素进行双击后触发。
+
+#### 事件顺序
+
+在单个动作触发多个事件时，它们的顺序是固定的
+
+比如，在按下鼠标按钮时，单击会首先触发 `mousedown`，然后释放鼠标按钮时，会触发 `mouseup` 和 `click`。即遵循 `mousedown` → `mouseup` → `click` 的顺序
+
+
+
+### 获取按钮 which
+
+`which` 允许区分 “right-mousedown” 和 “left-mousedown”
+
+有三个可能的值：
+
+- `event.which == 1` —— 左按钮
+- `event.which == 2` —— 中间按钮
+- `event.which == 3` —— 右按钮
+
+### 组合键
+
+所有的鼠标事件都包含有关按下的组合键信息。
+
+属性：
+
+- `shiftKey`
+- `altKey`
+- `ctrlKey`
+- `metaKey` (Cmd for Mac)
+
+
+
+例子
+
+```html
+<button id="button">Alt+Shift+Click on me!</button>
+
+<script>
+  button.onclick = function(event) {
+    if (event.altKey && event.shiftKey) {
+      alert('Hooray!');
+    }
+  };
+</script>
+```
+
+#### mac 上**通常使用** `Cmd` **而不是** `Ctrl`
+
+在 Windows 和 Linux 上修改键是 Alt、Shift 和 Ctrl。在 Mac 上还有：Cmd，它对应于属性 `metaKey`。
+
+在大多数情况下，当 Windows/Linux 使用 Ctrl 时，Mac 的用户会使用 Cmd。
+
+### 事件坐标 
+
+所有的鼠标事件都有两种形式的坐标：
+
+1. 对于窗口而言：`clientX` 和 `clientY`。
+2. 对于文档而言：`pageX` 和 `pageY`。
+
+### Mousedown 双击不选择文本
+
+鼠标点击有一个让人不安的副作用。双击可以选择文本。
+
+文本选择是 `mousedown` 事件的默认浏览器操作。因此比较好的解决方案是处理 `mousedown` 并阻止它发生
+
+```html
+
+<div ondblclick="alert('Click!')" onmousedown="return false">
+  Double-click me
+</div>
+```
+
+#### 防止选择 css解决方案
+
+无法选择该文本
+
+```html
+<style>
+  b {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+</style>
+
+Before...
+<b ondblclick="alert('Test')">
+  Unselectable
+</b>
+...After
+```
+
+#### 取消选择
+
+```html
+Before...
+<b ondblclick="getSelection().removeAllRanges()">
+  Double-click me
+</b>
+...After
+```
+
+#### 防止复制
+
+复制事件 oncopy
+
+```html
+<div oncopy="alert('Copying forbidden!');return false">
+  Dear user,
+  The copying is forbidden for you.
+  If you know JS or HTML, then you can get everything from the page source though.
+</div>
+```
+
+## 移动
+
+### relatedTarget
+
+对于 `mouseover`：
+
+- `event.target` —— 是鼠标经过的那个元素。
+- `event.relatedTarget` —— 是鼠标上一次经过的元素。
+
+`mouseout` 则与之相反：
+
+- `event.target` —— 是鼠标离开的元素。
+- `event.relatedTarget` —— 是当前指针位置下的（鼠标进入的）元素。
+
+#### 可能为null
+
+当鼠标不是来源于另一个元素，而是窗口以外,或者是离开了窗口 此时 relatedTarget的值为null
+
+### 事件频率
+
+浏览器一直检查鼠标的位置。如果它注意到鼠标变化了，那么就会触发相应的事件。
+
+这意味着如果访问者非常快地移动鼠标，那么 DOM 元素就会被跳过
+
+### 进入子元素 时额外的mouseout
+
+**根据浏览器逻辑，鼠标光标在任意时间只会位于单个元素上 —— 嵌套最多的那个（而且是 z-index 最大的那个）。**
+
+因此如果它转到另一个元素（甚至是一个子代），那么它将离开先前的那个。就这么简单。
+
+### 忽略元素内部的移入移出
+
+`mouseenter/mouseleave` 事件类似于 `mouseover/mouseout`。当鼠标指针移入/移出元素时，它们也会被触发。
+
+但有两个不同之处：
+
+1. 元素内部的转换不会有影响。
+2. `mouseenter/mouseleave` 事件不会冒泡。
+
+#### 由于无法冒泡 所以无法使用事件委托
+
+
+
