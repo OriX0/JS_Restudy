@@ -1673,3 +1673,79 @@ Before...
 
 
 
+## 鼠标拖放事件
+
+[HTML5拖放事件](https://www.runoob.com/html/html5-draganddrop.html)
+
+### 拖放算法
+
+1. 在 `mousedown` 上 —— 根据需要准备要移动的元素（也许创建它的一个副本）。
+2. 然后在 `mousemove` 上，通过更改 `left/top` 和 `position:absolute` 来移动它。
+3. 在 `mouseup` 上 —— 执行与完成的拖放相关的所有行为。
+4. 禁用浏览器对于拖放的默认行为
+
+
+
+### 关于定位
+
+保持元素相对于鼠标指针的初始偏移
+
+```javascript
+// onmousedown
+let shiftX = event.clientX - elem.getBoundingClientRect().left;
+let shiftY = event.clientY - elem.getBoundingClientRect().top;
+```
+
+### 实例
+
+```js
+/* 拖放实现
+  1.在mousedown上 ---根据需要准备移动的元素
+  2.在mousemove上  通过更改left/top和 position来移动它
+  3.在mouseup上 执行与完成拖放相关的行为
+*/
+elem.onmousedown = function (event) {
+  // 获取鼠标和元素的偏移量
+  let shiftX = event.clientX - elem.getBoundingClientRect().left;
+  let shiftY = event.clientY - elem.getBoundingClientRect().top;
+  //确保absolute 
+  elem.style.position = 'absolute';
+  // 改变index 保证在顶部
+  elem.style.zIndex = 1000;
+  // 将元素脱离原父元素 直接移动到body中 作为body子元素 且 absolute是相对于body
+  document.body.append(elem);
+  moveAt(event.pageX, event.pageY);
+
+  function moveAt (pageX, pageY) {
+    elem.style.left = pageX - shiftX + 'px';
+    elem.style.top = pageY - shiftY + 'px';
+
+  }
+  function onMouseMove (event) {
+    moveAt(event.pageX, event.pageY);
+  }
+  document.addEventListener('mousemove', onMouseMove);
+  elem.onmouseup = function () {
+    document.removeEventListener('mousemove', onMouseMove);
+    elem.onmouseup = null;
+  }
+}
+elem.ondragstart = function () {
+  return false;
+}
+```
+
+
+
+### 获取被拖动遮盖住的元素
+
+```javascript
+// 在一个鼠标事件处理程序中
+ball.hidden = true; // (*) 隐藏我们拖动的元素
+
+let elemBelow = document.elementFromPoint(event.clientX, event.clientY);
+// elemBelow 是球下方的元素，可能是 droppable 的元素
+
+ball.hidden = false;
+```
+
