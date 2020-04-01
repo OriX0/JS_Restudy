@@ -980,7 +980,7 @@ function getCoords(elem) {
 }
 ```
 
-# 事件
+# 事件简介
 
 ## 浏览器事件
 
@@ -1480,7 +1480,7 @@ alert(event.clientX); // 100
 
 
 
-# 事件细节
+# UI事件
 
 ## 鼠标事件基础
 
@@ -1749,3 +1749,51 @@ let elemBelow = document.elementFromPoint(event.clientX, event.clientY);
 ball.hidden = false;
 ```
 
+## 键盘
+
+### event.code 和event.key 
+
+事件对象的 `key` 属性允许获取字符，
+
+事件对象的 `code` 属性则允许获取“物理按键代码” 准确地标明了哪个键被按下了。
+
+| Key     | `event.key` | `event.code` |
+| :------ | :---------- | :----------- |
+| Z       | `z`（小写） | `KeyZ`       |
+| Shift+Z | `Z`（大写） | `KeyZ`       |
+
+#### 各类按键代码
+
+- 字符键的代码为 `"Key"`：`"KeyA"`，`"KeyB"` 等。
+- 数字键的代码为：`"Digit"`：`"Digit0"`，`"Digit1"` 等。
+- 特殊按键的代码为按键的名字：`"Enter"`，`"Backspace"`，`"Tab"` 等。
+
+#### 若按键没有给出字符 则大致相同 
+
+| Key       | `event.key` | `event.code`                |
+| :-------- | :---------- | :-------------------------- |
+| F1        | `F1`        | `F1`                        |
+| Backspace | `Backspace` | `Backspace`                 |
+| Shift     | `Shift`     | `ShiftRight` 或 `ShiftLeft` |
+
+#### 改变的情况
+
+`event.key` 的值是一个字符，它随语言而改变。
+
+`event.code` 对于不同的键盘布局，相同的按键可能会具有不同的字符,但物理位置的code不变 则热键照常使用
+
+### 自动重复
+
+如果按下一个键足够长的时间，它就会开始“自动重复”：`keydown` 会被一次又一次地触发，然后当按键被释放时，我们最终会得到 `keyup`。因此，有很多 `keydown` 却只有一个 `keyup` 是很正常的。
+
+### 默认行为
+
+默认行为各不相同，因为键盘可能会启动许多可能的东西。
+
+例如：
+
+- 出现在屏幕上的一个字符（最明显的结果）。
+- 一个字符被删除（Delete 键）。
+- 滚动页面（PageDown 键）。
+- 浏览器打开“保存页面”对话框（Ctrl+S）
+- ……等。
