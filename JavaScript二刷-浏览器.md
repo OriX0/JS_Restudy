@@ -1797,3 +1797,47 @@ ball.hidden = false;
 - 滚动页面（PageDown 键）。
 - 浏览器打开“保存页面”对话框（Ctrl+S）
 - ……等。
+
+
+
+## 滚动
+
+`scroll` 事件允许对页面或元素滚动作出反应。
+
+### 显示当前滚动
+
+```javascript
+window.addEventListener('scroll', function() {
+  document.getElementById('showScroll').innerHTML = window.pageYOffset + 'px';
+});
+```
+
+### 防止滚动
+
+- 不能通过在 `onscroll` 监听器中使用 `event.preventDefault()` 来阻止滚动，因为它会在滚动发生 **之后** 才触发。
+- 我们可以在导致滚动的事件上，例如在 pageUp 和 pageDown 的 `keydown` 事件上，使用 `event.preventDefault()`来阻止滚动。
+- 启动滚动的方式有很多，使用 CSS 的 `overflow` 属性更加可靠。
+
+### 滚动的弹性及不精确
+
+1. **滚动是“弹性的”**。在某些浏览器/设备中，我们可以在文档的顶端或末端稍微多滚动出一点（超出部分显示的是空白区域，然后文档将自动“弹回”到正常状态）。
+2. **滚动并不精确**。当我们滚动到页面末端时，实际上我们可能距真实的文档末端约 0-50px。
+
+### 获取当前是否滚动到离底部Nps的地方
+
+获取当前的bottom 坐标 然后与 窗口高度进行比对
+
+bottom坐标的值的下限是 窗口高度
+
+```JavaScript
+    // 获取当前的底部坐标
+    let windowRelativeBottom = document.documentElement.getBoundingClientRect().bottom;
+
+    // 如果用户将页面滚动了足够远（文档末端距窗口底部 <Npx）
+    if (windowRelativeBottom < document.documentElement.clientHeight + N) {
+      // do something;
+        ...
+    }
+  }
+```
+
