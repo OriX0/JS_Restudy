@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <select id="genres">
+    <option value="rock">Rock</option>
+    <option value="blues" selected>Blues</option>
+  </select>
+</body>
+<script>
+  /*使用 JavaScript 来实现：
+
+*/
+
+  // 显示所选选项的值和文本。
+  let selected = genres.options[genres.selectedIndex];
+  let text = selected.text;
+  let value = selected.value;
+
+  //添加一个选项：<option value="classic">Classic</option>。
+  let newOption = new Option('Classic', 'Classic');
+  genres.append(newOption);
+  // 使之变为已选的。
+  newOption.selected = true;
+</script>
+
+</html>

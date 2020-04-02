@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <form name="my">
+    <input name="one" value="1">
+    <input name="two" value="2">
+    <input type="radio" name="age" value="10">
+    <input type="radio" name="age" value="20">
+  </form>
+
+  <form id="form">
+    <fieldset name="userFields">
+      <legend>info</legend>
+      <input name="login" type="text">
+    </fieldset>
+</body>
+<script>
+  // 获取表单my
+  let form = document.forms.my; // <form name="my"> 元素
+
+  // 获取表单中的元素
+  let elem = form.elements.one; // <input name="one"> 元素
+
+  alert(elem.value); // 1
+  // 获取单选框集合
+  let ageElems = form.elements.age;
+
+  alert(ageElems[0]); // [object HTMLInputElement]
+
+  // 获取fields子表单
+  let form = document.getElementById('form');
+  let fieldset = form.elements.userFields;
+  alert(fieldset); // HTMLFieldSetElement
+
+  // 我们可以通过名字从表单和 fieldset 中获取 input
+  alert(fieldset.elements.login == form.elements.login); // true
+
+  // 反向引用
+  let login = form.login;
+  //反向
+  let form  = login.form
+</script>
+
+</html>
