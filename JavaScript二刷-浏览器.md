@@ -2024,3 +2024,160 @@ option = new Option(text, value, defaultSelected, selected);
 - `option.text`
 
   `option` 的文本内容（可以被访问者看到）。
+
+
+
+## 聚焦：focus/blur
+
+### focus/blur事件
+
+当元素聚焦时，会触发 `focus` 事件
+
+当元素失去焦点时，会触发 `blur` 事件。
+
+### focus/blur方法
+
+`elem.focus()` 获取焦点
+
+ `elem.blur()` 移除元素上的焦点。
+
+#### JavaScript导致焦点丢失
+
+很多种原因可以导致焦点丢失。
+
+其中之一就是用户点击了其它位置。当然 JavaScript 自身也可能导致焦点丢失，例如：
+
+- 一个 `alert` 会将焦点移至自身，因此会导致元素失去焦点（触发 `blur` 事件），而当 `alert` 对话框被取消时，焦点又回重新回到原元素上（触发 `focus` 事件）。
+- 如果一个元素被从 DOM 中移除，那么也会导致焦点丢失。如果稍后它被重新插入到 DOM，焦点也不会回到它身上。
+
+这些特性有时候会导致 `focus/blur` 处理程序发生异常 —— 在不需要它们时触发。
+
+### 让元素可以聚焦
+
+默认情况下，很多元素不支持聚焦。
+
+使用 HTML-特性（attribute）`tabindex` 可以改变这种情况。
+
+任何具有 `tabindex` 特性的元素，都会变成可聚焦的。
+
+#### 切换顺序
+
+从 `1` 开始的具有 `tabindex` 的元素排在第一位（按 `tabindex` 顺序），然后是不具有 `tabindex` 的元素（例如常规的 `input`）。
+
+#### 切换中的特殊值
+
+- `tabindex="0"` 会使该元素被与那些不具有 `tabindex` 的元素放在一起。也就是说，当我们切换元素时，具有 `tabindex="0"` 的元素将排在那些具有 `tabindex ≥ 1` 的元素的后面。
+
+  通常，它用于使元素具有焦点，但是保留默认的切换顺序。使元素成为与 `input` 一样的表单的一部分。
+
+  比如执行顺序 1 -- 2 -- 0
+
+- `tabindex="-1"` 只允许以编程的方式聚焦于元素。Tab 键会忽略这样的元素，但是 `elem.focus()` 有效。
+
+#### **elem.tabIndex**也有效
+
+使用 `elem.tabIndex` 通过 JavaScript 来添加 `tabindex`。效果是一样的
+
+### focus/blur实现事件委托
+
+#### 本身不冒泡
+
+`focus` 和 `blur` 事件不会向上冒泡。
+
+#### 使用遗留特性 监听外部事件并向下传递
+
+`focus/blur` 不会向上冒泡，但会在捕获阶段向下传播。
+
+```JavaScript
+<form id="form">
+  <input type="text" name="name" value="Name">
+  <input type="text" name="surname" value="Surname">
+</form>
+
+<style> .focused { outline: 1px solid red; } </style>
+
+<script>
+  // 将处理程序置于捕获阶段（最后一个参数为 true）
+  form.addEventListener("focus", () => form.classList.add('focused'), true);
+  form.addEventListener("blur", () => form.classList.remove('focused'), true);
+</script>
+```
+
+#### 使用 `focusin` 和 `focusout` 事件 
+
+与 `focus/blur` 事件完全一样，只是它们会冒泡。
+
+值得注意的是，必须使用 `elem.addEventListener` 来分配它们，而不是 `on`
+
+```JavaScript
+<form id="form">
+  <input type="text" name="name" value="Name">
+  <input type="text" name="surname" value="Surname">
+</form>
+
+<style> .focused { outline: 1px solid red; } </style>
+
+<script>
+  form.addEventListener("focusin", () => form.classList.add('focused'));
+  form.addEventListener("focusout", () => form.classList.remove('focused'));
+</script>
+```
+
+## 事件
+
+### change事件
+
+- 当元素更改完成时，将触发 `change` 事件。
+- 对于文本输入框，当其失去焦点时，就会触发 `change` 事件。
+- 对于其它元素：`select`，`input type=checkbox/radio`，会在选项更改后立即触发 `change` 事件。
+
+### input事件
+
+- 每当用户对输入值进行修改后，就会触发 `input` 事件。
+- 只要值改变了，`input` 事件就会触发，即使那些不涉及键盘行为（action）的值的更改也是如此：使用鼠标粘贴，或者使用语音识别来输入文本。
+- 另一方面，`input` 事件不会在那些不涉及值更改的键盘输入或其他行为上触发，例如在输入时按方向键 ⇦ ⇨。
+- 当输入值更改后，就会触发 `input` 事件。所以，我们无法使用 `event.preventDefault()` —— 已经太迟了，不会起任何作用了。
+
+### cut copy paste事件
+
+这些事件发生于剪切/拷贝/粘贴一个值的时候。
+
+它们属于 [ClipboardEvent](https://www.w3.org/TR/clipboard-apis/#clipboard-event-interfaces) 类，并提供了对拷贝/粘贴的数据的访问方法。
+
+我们也可以使用 `event.preventDefault()` 来中止行为，然后什么都不会被复制/粘贴。
+
+```JavaScript
+// 阻止了所有的这样的事件，并显示出了我们所尝试剪切/拷贝/粘贴的内容
+<input type="text" id="input">
+<script>
+  input.oncut = input.oncopy = input.onpaste = function(event) {
+    alert(event.type + ' - ' + event.clipboardData.getData('text/plain'));
+    return false;
+  };
+</script>
+```
+
+请注意，剪贴板是“全局”操作系统级别的。安全起见，大多数浏览器仅在特定的用户行为下，才允许对剪贴板进行读/写，例如在 `onclick` 事件处理程序中。
+
+### submit事件
+
+提交表单主要有两种方式：
+
+1. 第一种 —— 点击 `<input type="submit">` 或 `<input type="image">`。
+2. 第二种 —— 在 `input` 字段中按下 Enter 键。
+
+这两个行为都会触发表单的 `submit` 事件。处理程序可以检查数据，
+
+如果有错误，就显示出来，并调用 `event.preventDefault()`，这样表单就不会被发送到服务器了。
+
+#### submit会触发click事件
+
+在输入框中使用 Enter 发送表单时，会在 `<input type="submit"> `上触发一次 `click` 事件。
+
+这很有趣，因为实际上根本没有点击。
+
+### submit方法
+
+如果要手动将表单提交到服务器，我们可以调用 `form.submit()`。
+
+这样就不会产生 `submit` 事件

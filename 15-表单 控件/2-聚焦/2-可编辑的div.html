@@ -1,0 +1,78 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <link type="text/css" rel="stylesheet" href="my.css">
+  <meta charset="utf-8">
+</head>
+<style>
+  .view,
+  .edit {
+    height: 150px;
+    width: 400px;
+    font-family: sans-serif;
+    font-size: 14px;
+    display: block;
+  }
+
+  .view {
+    /* padding + border = 3px */
+    padding: 2px;
+    border: 1px solid black;
+  }
+
+  .edit {
+    /* replace padding with border (still 3px not to shift the contents) */
+    border: 3px solid blue;
+    padding: 0px;
+  }
+
+  .edit:focus {
+    /* remove focus border in Safari */
+    outline: none;
+  }
+</style>
+
+<body>
+
+  <ul>
+    <li>点击下面的这个 div 来进行编辑 元素从div改变成textarea。</li>
+    <li>按 Enter 键或者通过 blur 来保存结果。</li>
+  </ul>
+
+  允许输入 HTML。
+
+  <div id="view" class="view">Text</div>
+  <script>
+    let area = null;
+    let view = document.getElementById('view');
+
+    function startEdit() {
+      area = document.createElement('textarea');
+      area.classList.add('edit');
+      area.value = view.innerHTML;
+      // 判断是否按下enter键
+      area.onkeydown = function (event) {
+        if (event.key == 'Enter') {
+          this.blur()
+        }
+      }
+      area.onblur = function () {
+        endEdit();
+      }
+      view.replaceWith(area);
+      area.focus();
+    }
+    view.onclick = function () {
+      startEdit();
+    }
+
+    function endEdit() {
+      view.innerHTML = area.value;
+      area.replaceWith(view);
+    }
+  </script>
+
+</body>
+
+</html>
