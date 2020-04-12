@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图片放大镜案例</title>
+</head>
+<style>
+  #small {
+    width: 177.25px;
+    height: 315.25px;
+    position: absolute;
+    top: 100px;
+    left: 100px;
+  }
+
+  #small img {
+    width: 100%;
+    height: 100%;
+  }
+
+  #mark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 80px;
+    background-color: white;
+    opacity: 0.5;
+
+    display: none;
+  }
+
+  #big {
+    width: 200px;
+    height: 200px;
+    position: absolute;
+    left: 500px;
+    top: 100px;
+    border: 1px solid #666;
+    overflow: hidden;
+  }
+
+  #big img {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 354.5px;
+    height: 630.5px;
+  }
+</style>
+
+<body>
+  <div id="small">
+    <img src="./ui.jpg" alt="">
+    <div id="mark"></div>
+  </div>
+  <div id="big">
+    <img src="./ui.jpg" alt="">
+  </div>
+</body>
+<script>
+  let oSmall = document.getElementById('small');
+  let oMark = document.getElementById('mark');
+  let oBig = document.getElementById('big');
+  let bigImg = oBig.getElementsByTagName('img')[0];
+  oSmall.onmouseover = function (event) {
+    oMark.style.display = 'block';
+  }
+  oSmall.onmouseout = function (event) {
+    oMark.style.display = 'none';
+  }
+
+
+  oSmall.onmousemove = function (event) {
+    let markT = event.clientY - oSmall.offsetTop - oMark.offsetHeight / 2;
+    let markL = event.clientX - oSmall.offsetLeft - oMark.offsetWidth / 2;
+    if (markT < 0) markT = 0;
+    if (markT > (oSmall.offsetHeight - oMark.offsetHeight)) {
+      markT = oSmall.offsetHeight - oMark.offsetHeight;
+    }
+    if (markL < 0) markL = 0;
+    if (markL > (oSmall.offsetWidth - oMark.offsetWidth)) {
+      markL = oSmall.offsetWidth - oMark.offsetWidth;
+    }
+    oMark.style.top = markT + 'px';
+    oMark.style.left = markL + 'px';
+    bigImg.style.top = markT * -2 + 'px';
+    bigImg.style.left = markL * -2 + 'px';
+  };
+</script>
+
+</html>

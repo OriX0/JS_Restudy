@@ -2181,3 +2181,156 @@ option = new Option(text, value, defaultSelected, selected);
 如果要手动将表单提交到服务器，我们可以调用 `form.submit()`。
 
 这样就不会产生 `submit` 事件
+
+# 加载文档和其他资源
+
+## 页面生命周期
+
+### 三个重要事件
+
+- `DOMContentLoaded` —— 浏览器已完全加载 HTML，并构建了 DOM 树，但像 `<img>` 和样式表之类的外部资源可能尚未加载完成。
+- `load` —— 浏览器不仅加载完成了 HTML，还加载完成了所有外部资源：图片，样式等。
+- `beforeunload/unload` —— 当用户正在离开页面时。
+
+
+
+### DOMContentLoaded
+
+`DOMContentLoaded` 事件发生在 `document` 对象上。
+
+我们必须使用 `addEventListener` 来捕获它：
+
+```javascript
+document.addEventListener("DOMContentLoaded", ready);
+```
+
+#### DOMContentLoaded 必须等待脚本执行完毕
+
+因为脚本可能想要修改 DOM，甚至对其执行 `document.write` 操作，所以 `DOMContentLoaded` 必须等待脚本执行结束。
+
+##### 除了以下两种情况
+
+1. 具有 `async` 特性（attribute）的脚本不会阻塞 `DOMContentLoaded`。
+2. 使用 `document.createElement('script')` 动态生成并添加到网页的脚本也不会阻塞 `DOMContentLoaded`。
+
+#### DOMContentLoaded 一般不会等待样式
+
+
+
+陷阱。如果在样式后面有一个脚本，那么该脚本必须等待样式表加载完成：
+
+```javascript
+<link type="text/css" rel="stylesheet" href="style.css">
+<script>
+  // 在样式表加载完成之前，脚本都不会执行
+  alert(getComputedStyle(document.body).marginTop);
+</script>
+```
+
+#### 浏览器的内建和表单的自我填充也是基于此事件
+
+如果 `DOMContentLoaded` 被需要加载很长时间的脚本延迟触发，那么自动填充也会等待。
+
+你可能在某些网站上看到过（如果你使用浏览器自动填充）—— 登录名/密码字段不会立即自动填充，而是在页面被完全加载前会延迟填充。这实际上是 `DOMContentLoaded` 事件之前的延迟。
+
+### window.onload
+
+当整个页面，包括样式、图片和其他资源被加载完成时，会触发 `window` 对象上的 `load` 事件。可以通过 `onload` 属性获取此事件。
+
+### window.onunload
+
+当访问者离开页面时，`window` 对象上的 `unload` 事件就会被触发。我们可以在那里做一些不涉及延迟的操作，例如关闭相关的弹出窗口。
+
+#### 通过navigator.sendBeacon(url, data)将数据发送到后台进行统计
+
+浏览器离开页面，但仍然在执行 `sendBeacon`
+
+```javascript
+let analyticsData = { /* 带有收集的数据的对象 */ };
+
+window.addEventListener("unload", function() {
+  navigator.sendBeacon("/analytics", JSON.stringify(analyticsData));
+};
+```
+
+### window.onbeforeunload
+
+如果访问者触发了离开页面的导航（navigation）或试图关闭窗口，`beforeunload` 处理程序将要求进行更多确认。
+
+如果我们要取消事件，浏览器会询问用户是否确定。
+
+### readyState
+
+`document.readyState` 属性可以为我们提供当前加载状态的信息。
+
+它有 3 个可能值：
+
+- `loading` —— 文档正在被加载。
+- `interactive` —— 文档被全部读取。
+- `complete` —— 文档被全部读取，并且所有资源（例如图片等）都已加载完成。
+
+
+
+## 脚本加载的方式
+
+### 默认按文档流加载
+
+会导致两个重要的问题：
+
+1. 脚本不能访问到位于它们下面的 DOM 元素，因此，脚本无法给它们添加处理程序等。
+2. 如果页面顶部有一个笨重的脚本，它会“阻塞页面”。在该脚本下载并执行结束前，用户都不能看到页面内容：
+
+### defer 后台下载加载 一般用于需要DOM的脚本
+
+`defer` 特性告诉浏览器它应该继续处理页面，并“在后台”下载脚本，然后等页面加载完成后，再执行此脚本。
+
+#### 特性
+
+- 具有 `defer` 特性的脚本不会阻塞页面。
+- 具有 `defer` 特性的脚本总是要等到 DOM 解析完毕，但在 `DOMContentLoaded` 事件之前执行。
+- 具有 `defer` 特性的脚本保持其相对顺序，就像常规脚本一样。
+- 如果 script脚本没有 `src`，则会忽略 `defer`特性。 仅适用于外部脚本
+
+
+
+### async 异步加载 一般用于外部脚本
+
+async意味着脚本是完全独立的
+
+- 页面不会等待异步脚本
+- DOMContentLoaded 和异步脚本不会彼此等待  发生顺序不确定
+- 其他脚本不会等待异步脚本加载完成
+- 异步脚本彼此之间不会相互等待 谁先加载好 谁先执行
+
+
+
+###  js动态添加脚本
+
+通过js动态添加的时候 默认行为是异步的
+
+- 它们不会等待任何东西，也没有什么东西会等它们。
+- 先加载完成的脚本先执行（“加载优先”顺序）
+
+可以设置脚本的async属性来决定他是否为异步
+
+
+
+## 跟踪资源加载的方法
+
+两个事件：
+
+- `onload` —— 成功加载，
+- `onerror` —— 出现 error。
+
+
+
+### 脚本的加载
+
+#### script.onload 脚本加载完毕
+
+#### script.onerror 跟踪脚本加载期间的error
+
+### 其他资源的跟踪也使用者两个事件
+
+**唯一的例外是 `iframe`：出于历史原因，不管加载成功还是失败，即使页面没有被找到，它都会触发 `load` 事件。**
+
