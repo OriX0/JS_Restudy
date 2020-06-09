@@ -1,0 +1,15 @@
+//n为非0数字
+Infinity*0;
+0/0;
+n/0;
+n%0;
+n%Infinity;
+Infinity%n;
+Infinity/Infinity;
+Infinity%Infinity;
+-Infinity+Infinity;
+Infinity-Infinity;
+-0+-0;
++0+-0;
++0-(-0);
+-0-(-0);
