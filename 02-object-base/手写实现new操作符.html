@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <h1>new 做了什么</h1>
+  <ul>
+    <li>创建一个全新的对象</li>
+    <li>该对象会被执行[[Prototype]]链接</li>
+    <li>该对象通过[[Prototype]]连接到 函数的prototype上</li>
+    <li>生成的新对象绑定到函数调用的this</li>
+    <li>如果返回的是Object(包括Function Array Date Error)则返回Object  否则返回该对象</li>
+  </ul>
+  <hr/>
+  <h2>调用形式</h2>
+  <pre>
+    newOperator(构造函数,其余参数);
+  </pre>
+  <hr>
+  <h3>注意 模仿 new.target操作</h3>
+</body>
+<script>
+  function newOperator(ctor) {
+    if(typeof ctor !=='function') {
+      throw Error('ctor must be function');
+    }
+    var newObj = Object.create(ctor.prototype);
+    newOperator.target=ctor;
+    var argsArr =[].slice.call(arguments,1);
+    var ctorResult =ctor.apply(newObj,argsArr);
+    var isFunction = typeof ctorResult==='function';
+    var isObject = typeof ctorResult==='object'&&ctorResult!==null;
+    if(isFunction ||isObject) return ctorResult;
+    return newObj;
+  }
+</script>
+</html>
