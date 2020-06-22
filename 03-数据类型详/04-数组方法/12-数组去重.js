@@ -17,3 +17,9 @@ let strings = ["Hare", "Krishna", "Hare", "Krishna",
 ];
 
 alert(unique(strings)); // Hare, Krishna, :-O
+
+
+// 结合Set结构 及展开操作符
+function unique2 (arr) {
+  return [...new Set(arr)];
+}
