@@ -4,7 +4,7 @@
  [1,2,3] 重新排序为 [1,2,3] 或 [1,3,2] 或 [3,1,2] 等，每种情况的概率相等 */
 function shuffle (array) {
   for (let i = array.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() & (i + 1));
+    let j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
 }
