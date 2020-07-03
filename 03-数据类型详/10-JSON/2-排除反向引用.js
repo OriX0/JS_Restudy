@@ -2,7 +2,7 @@
  * @Author: OriX
  * @Date: 2020-06-29 23:58:07
  * @LastEditors: OriX
- * @LastEditTime: 2020-06-30 00:00:21
+ * @LastEditTime: 2020-06-30 14:31:35
  * @FilePath: \JS_Restudy\03-数据类型详\10-JSON\2-排除反向引用.js
  */
 /* 在简单循环引用的情况下，我们可以通过名称排除序列化中违规的属性。
