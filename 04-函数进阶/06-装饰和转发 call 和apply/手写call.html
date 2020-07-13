@@ -1,0 +1,95 @@
+<!--
+ * @Author: OriX
+ * @Date: 2020-07-13 18:21:22
+ * @LastEditors: OriX
+ * @LastEditTime: 2020-07-14 01:09:26
+ * @FilePath: \JS_Restudy\04-函数进阶\06-装饰和转发 call 和apply\手写call.html
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+
+</body>
+<script>
+  // 获取全局对象
+  function getGlobalObject() {
+    return this;
+  }
+  // 生成function 代码
+  function generateFunction(argLength) {
+    // object[fn](argsArray)
+    let code = 'arguments[0][arguments[1]](';
+    for (let i = 0; i < argLength; i++) {
+      if (i > 0) code += ','; // 加入分隔符
+      code += 'arguments[2][' + i + ']';
+    }
+    code += ')';
+    return code;
+    // code 最终结果  arguments[0][arguments[1]]（arguments[2][1],arguments[2][2]...）
+  }
+  Function.prototype.callFn = function call(thisArg) {
+    // 判断this是否为函数类型 不是则抛出错误
+    if (typeof this !== 'function') {
+      throw new TypeError(this + 'not a function')
+    }
+    // 判断thisArg是否为null或者undefined 如果是 传入全局对象
+    if (typeof thisArg === 'undefined' || thisArg === null) {
+      thisArg = getGlobalObject();
+    }
+    // 将thisArg 进行toObject操作 如果传入的是原始值 其他值
+    thisArg = new Object(thisArg);
+    // 生成独一无二的函数名
+    var __fn = '__' + new Date().getTime();
+    var originalValue = thisArg[__fn];
+    // 判断是否有原值
+    var hasOriginalValue = thisArg.hasOwnProperty(__fn);
+    // 将函数赋值为对象方法
+    thisArg[__fn] = this;
+    // 生成function  并获得结果
+    var argArray = [].slice.call(arguments, 1);
+    var code = generateFunction(argArray.length);
+    var result = (new Function(code))(thisArg, __fn, argArray);
+    // 删除该方法
+    delete thisArg[__fn];
+    // 如果有原值 就赋值回去
+    if (hasOriginalValue) {
+      thisArg[__fn] = originalValue;
+    }
+    // 返回函数的结果
+    return result;
+  }
+  var doSth = function (name, age) {
+    var type = Object.prototype.toString.call(this);
+    console.log(typeof doSth);
+    console.log(this === firstArg);
+    console.log('type:', type);
+    console.log('this:', this);
+    console.log('args:', [name, age], arguments);
+    return 'this--';
+  };
+
+  var name = 'window';
+
+  var student = {
+    name: 'Ori',
+    age: 18,
+    doSth: 'doSth',
+    __fn: 'doSth',
+  };
+  var firstArg = student;
+  // var result = doSth.applyFn(firstArg, [1, {name: 'Rowboat'}]);
+  var result2 = doSth.callFn(firstArg, 1, {
+    name: 'Rowboat'
+  });
+  // console.log('result:', result);
+  console.log('result2:', result2);
+</script>
+
+</html>
