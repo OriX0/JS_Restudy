@@ -1,4 +1,28 @@
+# Build and Release Folders
+bin-debug/
+bin-release/
+[Oo]bj/
+[Bb]in/
+
+# Other files and folders
+.settings/
+.vscode/
+study/
+/tools_js
 node_modules/
 /LeetCode/node_modules/
 .history/
 Note_Md_First/
+
+# Executables
+*.swf
+*.air
+*.ipa
+*.apk
+.gitignore
+html5shiv.min.js
+test.html
+
+# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
+# should NOT be excluded as they contain compiler settings and other important
+# information for Eclipse / Flash Builder.
