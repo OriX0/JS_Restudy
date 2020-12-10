@@ -13,6 +13,7 @@ node_modules/
 /LeetCode/node_modules/
 .history/
 Note_Md_First/
+try/
 
 # Executables
 *.swf
